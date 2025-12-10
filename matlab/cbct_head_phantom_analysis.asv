@@ -1,0 +1,211 @@
+%% data importation and CT volume creation
+% we import mij and ij so that we can do analysis
+javaaddpath('C:\Users\Nathan Cao\OneDrive\Desktop\ct images analysis\ImageJ\mij.jar');
+javaaddpath('C:\Users\Nathan Cao\OneDrive\Desktop\ct images analysis\ImageJ\ij.jar');
+
+% set some parameters
+mu_w = 0.5;
+
+% start mij 
+MIJ.start();
+
+% set file path as the folder with all the ima (dicom) files of the slices
+folder = 'C:\Users\Nathan Cao\OneDrive\Desktop\ct images analysis\cbct_head_phantom\DCT_HEAD_CLEAR_NAT_FILL_FULL_HU_NORMAL_[AX3D]_0009';
+files = dir(fullfile(folder, '*.ima')); 
+
+% sort the slices in order of their names
+[~, idx] = sort({files.name});
+files = files(idx);
+
+% read in the slices and store in imj, a 3D array
+for i = 1:length(files)
+    img(:,:,i) = dicomread(fullfile(folder, files(i).name));
+end
+metaInfo = dicominfo(imageFile);
+
+disp(metaInfo)
+
+% conversion to housfield units
+var = (img - mu_w) / (mu_w) * 1000; 
+
+
+%% Single-projection DRR using Siddon's algorithm
+% Assumes `img` is already loaded: size(img) = [Nx_vol, Ny_vol, Nz_vol]
+% Voxel spacing (mm)
+
+theta_degs = [45 90 135 180 225 270 315];
+
+for theta = theta_degs
+
+    % set the rotation angle
+    theta_deg = theta;         
+    theta = deg2rad(theta_deg);
+    
+    rotation = [ cos(theta) -sin(theta)  0;
+          sin(theta)  cos(theta)  0;
+          0           0           1 ]; % the rotation matrix for the 
+    
+    vox_size = 0.438; % voxel size taken from imagej
+    [nx_vol, ny_vol, nz_vol] = size(img); % take the number of voxels in every direction
+    
+    
+    % Convert geometry to mm
+    SOD = 750;    % source-to-rotation-center (mm) = 75 cm
+    SDD = 1200;   % source-to-detector (mm) = 120 cm
+    
+    % Local detector axes before rotation
+    ey0 = [0; 1; 0];   % detector vertical axis
+    ez0 = [0; 0; 1];   % detector horizontal axis
+    ey = rotation * ey0;   % rotated detector y-axis
+    ez = rotation * ez0;   % rotated detector z-axis
+    
+    
+    % Place CT volume rotation center at origin (0,0,0)
+    src0 = [-SOD, 0, 0];               % source position (mm)
+    det_center0 = src0 + [SDD, 0, 0];   % detector plane center (mm)
+    
+    src        = (rotation * src0(:))';         % rotated source
+    det_center = (rotation * det_center0(:))';  % rotated detector center
+    
+    
+    % Define the detector size
+    det_width_mm  = 400;   % along detector z-direction (reminder that we are working with tomographic slices)
+    det_height_mm = 300;   % along detector y-direction 
+    det_pix_size  = 0.15;  % the detector pitch
+    
+    
+    
+    % number of detector pixels (rounded to nearest int)
+    nx_det = round(det_width_mm  / det_pix_size);  % horizontal (along z)
+    ny_det = round(det_height_mm / det_pix_size);  % vertical   (along y)
+    
+    % Precompute detector pixel coordinates (centered)
+    % We define detector plane such that:
+    % - plane normal is +x (points toward +x)
+    % - detector y aligns with volume y, detector z aligns with volume z
+    
+    % So detector pixel (i,j) maps to:
+    %   x = det_center(1)
+    %   y = ( (j-1) - (ny_det-1)/2 ) * det_pix_size
+    %   z = ( (i-1) - (nx_det-1)/2 ) * det_pix_size
+    y_coords = ((0:ny_det-1) - (ny_det-1)/2) * det_pix_size; % just computing the coordinates of the detector here
+    z_coords = ((0:nx_det-1) - (nx_det-1)/2) * det_pix_size;
+    
+    % Volume coordinate grid: define voxel centers and boundary planes
+    % Place volume center at origin:
+    vol_phys_size = [nx_vol, ny_vol, nz_vol] * vox_size; % mm
+    vol_min = -vol_phys_size/2;  % coordinate of minimum corner (x_min,y_min,z_min) in mm
+    % Strictly: voxel centers run from vol_min + vox_size/2 to vol_max - vox_size/2
+    % Prepare boundary planes for Siddon (voxel faces)
+    x_boundaries = vol_min(1) + (0:nx_vol) * vox_size; % size nx_vol+1
+    y_boundaries = vol_min(2) + (0:ny_vol) * vox_size;
+    z_boundaries = vol_min(3) + (0:nz_vol) * vox_size;
+    
+    % Preallocate projection image
+    proj = zeros(ny_det, nx_det); % rows = y (vertical), cols = z (horizontal)
+    
+    % Helper: clamp index
+    clamp = @(v,lo,hi) min(max(v,lo),hi);
+    
+    % Main loop: iterate over detector pixels
+    % Note: double loop can take time for very large detector arrays (~5 million pixels).
+    % For testing, consider downsampling det_pix_size or region of interest.
+    tic;
+    fprintf('Computing single projection: detector %d x %d pixels...\n', nx_det, ny_det);
+    
+    % Precompute flattened img for faster indexing? We'll index 3D array each time.
+    for j = 1:ny_det          % vertical index (y)
+        y_det = y_coords(j);
+        for i = 1:nx_det      % horizontal index (z)
+            z_det = z_coords(i);
+            % detector pixel center in world coords
+            %det_pt = [det_center(1), y_det, z_det];
+            det_pt = det_center + y_det * ey.' + z_det * ez.';
+            % ray direction from source to detector pixel
+            d = det_pt - src;
+            L = norm(d);      % physical ray length (mm)
+            if L == 0
+                proj(j,i) = 0;
+                continue;
+            end
+            % parameterize ray as P(t) = src + t * d, t in [0,1]
+            % compute t where ray crosses each set of axis-aligned planes, handle zero components to avoid division by zero
+            
+            % here we are literally just defining the planes in a particular
+            % direction
+            % d is the vector pointing from the source to a particular detector pixel
+            tx = [];
+            if abs(d(1)) > 0
+                tx = (x_boundaries - src(1)) / d(1);
+            end
+    
+            % do the same for y-plane and z-plane 
+            ty = [];
+            if abs(d(2)) > 0
+                ty = (y_boundaries - src(2)) / d(2);
+            end
+            tz = [];
+            if abs(d(3)) > 0
+                tz = (z_boundaries - src(3)) / d(3);
+            end
+    
+            % Combine and keep t within [0,1]
+            t_all = [];
+            if ~isempty(tx); t_all = [t_all, tx]; end
+            if ~isempty(ty); t_all = [t_all, ty]; end
+            if ~isempty(tz); t_all = [t_all, tz]; end
+    
+            % include endpoints 0 and 1, make sure they don't duplicate
+            t_all = unique([0, t_all, 1]);
+            % restrict to [0,1] and sort, recall that only the voxels matter, so since our d-vector records everything up to the detector, there's unnecessary information recorded too 
+            t_all = t_all(t_all >= 0 & t_all <= 1);
+            t_all = sort(t_all);
+    
+            % If fewer than 2 intersections, there is no path through volume;
+            % to go through a voxel, there needs to be an entry and an exit
+            if numel(t_all) < 2
+                proj(j,i) = 0;
+                continue;
+            end
+    
+            % Accumulate integral along segments
+            integral = 0;
+            for k = 1:(numel(t_all)-1)
+                t0 = t_all(k);
+                t1 = t_all(k+1);
+                % midpoint sample
+                tm = 0.5 * (t0 + t1);
+                Pm = src + tm * d;    % midpoint coordinates (mm)
+                % find voxel indices
+                ix = floor( (Pm(1) - vol_min(1)) / vox_size ) + 1;
+                iy = floor( (Pm(2) - vol_min(2)) / vox_size ) + 1;
+                iz = floor( (Pm(3) - vol_min(3)) / vox_size ) + 1;
+                if ix >= 1 && ix <= nx_vol && iy >= 1 && iy <= ny_vol && iz >= 1 && iz <= nz_vol
+                    % segment length in mm
+                    seg_len = L * (t1 - t0);
+                    % Add voxel value times path length
+                    integral = integral + double(img(ix,iy,iz)) * seg_len;
+                end
+            end
+            proj(j,i) = integral;
+        end
+        % progress display every 50 rows
+        if mod(j,50) == 0
+            fprintf('  processed %d/%d detector rows\n', j, ny_det);
+        end
+    end
+    elapsed = toc;
+    fprintf('Done. Time elapsed: %.1f s\n', elapsed);
+    
+    % Show the projection (log or linear display depending on values)
+    figure;
+    imagesc(flipud(proj)); axis image; colormap(gray);
+    title(sprintf('Simulated DRR (%d°)', theta_deg)); 
+end
+%%
+imagesc(flipud(proj)); axis image; colormap(gray);
+title(sprintf('Simulated DRR (%d°)', theta)); 
+
+%% recreate image with MIJ 
+% use MIJ to create an image based on img
+MIJ.createImage('CBCT_Volume', img, true);
