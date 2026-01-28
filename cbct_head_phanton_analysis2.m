@@ -44,7 +44,7 @@ nWorkers = 4;   % small!
 viewsPerWorker = ceil(n_view / nWorkers);
 
 
-parfor view = 1:n_view
+for view = 1:n_view
 
     theta = theta_array(view);
     fprintf('Calculating view #%d/%d (angle = %.0f deg)\n',view, n_view, theta/pi*180);
