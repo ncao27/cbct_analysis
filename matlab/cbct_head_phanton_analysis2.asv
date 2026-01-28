@@ -23,105 +23,81 @@ n_view = 360;
 theta_array = linspace(0, 2*pi, n_view);
 
 % define the volume that we store the CT image in 
-vol = zeros(nx, ny, nz, 'single');
+vol = zeros(nx, ny, nz, 'double');
 for z = 1:nz
     image = dicomread([indir files(z).name]);
-    vol(:,:,z) = single(image);
+    vol(:,:,z) = double(image);
 end
 vol = vol + header.RescaleIntercept;
 vol = (vol + 1000) / 1000 * mu_water;        % this step is to convert the HU to mu. 
 
-%% FASTER siddon algorithm
-fid = fopen(out_filename, 'w');
+%% siddon with cpp kernel
 
-% -------------------------
-% Voxel boundary planes
-% -------------------------
+mex siddon_kernel.cpp
 
-% not necessary to make these gpu arrays since projections is already GPU array
-x_plane = ((0:nx) - nx/2) * dx;
-y_plane = ((0:ny) - ny/2) * dy;
+x_plane = double(((0:nx) - nx/2) * dx); % note that we go from -nx/2 to +nx/2
+y_plane = double(((0:ny) - ny/2) * dy);
 z_plane = ((0:nz) - nz/2) * dz;
+projections = gpuArray(zeros(nu, nv, n_view, 'double'));
 
-projections = gpuArray(zeros(nu, nv, n_view, 'single'));
+for view = 1:n_view
+    theta = theta_array(view);
+    fprintf('Calculating view #%d/%d (angle = %.0f deg)\n',view, n_view, theta/pi*180);
+    % -------------------------
+    % Source position
+    % -------------------------
+    xs = sid * cos(theta);
+    ys = sid * sin(theta);
+    zs = 0;
 
-% -------------------------
-% Initialize source and detector positions
-% -------------------------
-h = figure;                 % create a new figure
-view = 1:n_view;            % view array
-theta = theta_array(view);  % index the corresponding angles
-xs = sid .* cos(theta);     % find point source x-position
-ys = sid .* sin(theta);     % find point source y-position
-zs = zeros(1, n_view);      % point source z-position, CT vol centered at z=0
-xd0 = xs - (sdd/sid) .* xs; % detector center x-positions
-yd0 = ys - (sdd/sid) .* ys; % detector center y-positions
-zd0 = 0; 
-ux = cos(theta - pi/2);     %  along the theta directions
-uy = sin(theta - pi/2);     
+    % -------------------------
+    % Detector center
+    % -------------------------
+    xd0 = xs - (sdd/sid) * xs;
+    yd0 = ys - (sdd/sid) * ys;
+    zd0 = 0;
 
-% -------------------------
-% Reconstruction for specific slices
-% -------------------------
-% reconstruction on the detector surface
-for u = 1:nu
+    ux = cos(theta - pi/2); %  unit vector
+    uy = sin(theta - pi/2);
 
-    % computes the (x, y) position of pixel u on detector plane for current angle
-    xd = xd0 + (u - (nu/2+0.5)) * du * ux;
+    prj = zeros(nu, nv);
+
+    u = 1:nu; % u direction on the detector plane
+    v = 1:nv; % v direction on the detector plan
+
+    % we preallocate the x,y,z coordinates of each detector pixel, and then
+    % loop through them using the cpp kernel
+    xd = xd0 + (u - (nu/2+0.5)) * du * ux; 
     yd = yd0 + (u - (nu/2+0.5)) * du * uy;
+    zd = zd0 + (v - (nv/2+0.5)) * dv;
+    
+    % cpp kernel doing siddon reconstruction
+    % Inputs:
+    %   - vol: the CT volume that we read in
+    %   - x_plane: the x-dir planes that we define for voxels
+    %   - y_plane: the y-dir planes that we define for voxels
+    %   - z_plane: the z-dir planes that we define for voxels
+    %   - xs: the x-coord of point source
+    %   - ys: the y-coord of point source
+    %   - zs: the z-coord of point source
+    %   - xd: array of x-coordinates for detector plane
+    %   - yd: array of y-coordinates for detector plane
+    %   - zd: array of z-coordinates for detector plane
+    %   - nu: the number of pixels in u direction on detector
+    %   - nv: the number of pixels in v direction on detector
+    disp(class(vol))
+    disp(class(x_plane))
+    disp(class(xs))
+    disp(class(xd))
+    disp(class(nu))
+    
+    prj = siddon_mex(vol, x_plane, y_plane, z_plane, ...
+             xs, ys, zs, xd, yd, zd, nu, nv);
 
-    for v = 1:nv
-        zd = zd0 + (v - (nv/2+0.5)) * dv;
-        
-        dxr = xd - xs;
-        dyr = yd - ys;
-        dzr = zd - zs;
-        
-        L = sqrt(dxr.^2 + dyr.^2 + dzr.^2);
-        
-        % Siddon parameters
-        disp(size(x_plane))
-        ax = (x_plane - xs) ./ dxr;
-        ay = (y_plane - ys) ./ dyr;
-        az = (z_plane - zs) ./ dzr;
-        
-        a_min = max([min(ax), min(ay), min(az)]);
-        a_max = min([max(ax), max(ay), max(az)]);
-        
-        if a_min >= a_max
-            continue;
-        end
-        
-        % Collect intersections
-        a = [ax, ay, az];
-        a = a(a >= a_min & a <= a_max);
-        a = sort(a);
-        
-        % Integrate voxel contributions
-        for n = 1:length(a)-1
-            amid = 0.5*(a(n)+a(n+1));
-        
-            xmid = xs + amid*dxr;
-            ymid = ys + amid*dyr;
-            zmid = zs + amid*dzr;
-        
-            i = floor((xmid - x_plane(1))/dx) + 1;
-            j = floor((ymid - y_plane(1))/dy) + 1;
-            k = floor((zmid - z_plane(1))/dz) + 1;
-        
-            if i>=1 && i<=nx && j>=1 && j<=ny && k>=1 && k<=nz
-                projections(u, v, :) = projections(u, v, :) + vol(i,j,k) * (a(n+1)-a(n)) * L;
-            end
-        end
-    end
+    projections(:,:,view) = prj;
 end
-projections(:,:,1) = prj;
-imshow(prj',[0 5]);
-title_str = sprintf('Calculating view #%d/%d (angle = %.0f deg)\n',view, n_view, theta/pi*180);
-title(title_str); 
-set(h,'position',[200 200 700 600]); pause(0.5);
-fwrite(fid, prj, 'single');
-fclose(fid);
+
+
 
 
 %% siddon algorithm
@@ -133,8 +109,7 @@ fid = fopen(out_filename, 'w');
 x_plane = ((0:nx) - nx/2) * dx; % note that we go from -nx/2 to +nx/2
 y_plane = ((0:ny) - ny/2) * dy;
 z_plane = ((0:nz) - nz/2) * dz;
-
-projections = gpuArray(zeros(nu, nv, n_view, 'single'));
+projections = gpuArray(zeros(nu, nv, n_view, 'double'));
 
 h = figure; 
 for view = 1:n_view
@@ -213,9 +188,10 @@ for view = 1:n_view
     title_str = sprintf('Calculating view #%d/%d (angle = %.0f deg)\n',view, n_view, theta/pi*180);
     title(title_str); 
     set(h,'position',[200 200 700 600]); pause(0.5);
-    fwrite(fid, prj, 'single');
+    fwrite(fid, prj, 'double');
 end
 fclose(fid);
+
 %% FASTER reconstruction of the ct volume
 % define the reconstructed volume
 recon = gpuArray.zeros(nx, ny, nz, 'single');
