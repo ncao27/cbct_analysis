@@ -38,9 +38,14 @@ mex siddon_kernel.cpp
 x_plane = double(((0:nx) - nx/2) * dx); % note that we go from -nx/2 to +nx/2
 y_plane = double(((0:ny) - ny/2) * dy);
 z_plane = double(((0:nz) - nz/2) * dz);
-projections = gpuArray(zeros(nu, nv, n_view, 'double'));
+projections = zeros(nu, nv, n_view, 'double');
 
-for view = 1:n_view
+nWorkers = 4;   % small!
+viewsPerWorker = ceil(n_view / nWorkers);
+
+
+parfor view = 1:n_view
+
     theta = theta_array(view);
     fprintf('Calculating view #%d/%d (angle = %.0f deg)\n',view, n_view, theta/pi*180);
     % -------------------------
@@ -59,8 +64,6 @@ for view = 1:n_view
 
     ux = cos(theta - pi/2); %  unit vector
     uy = sin(theta - pi/2);
-
-    prj = zeros(nu, nv);
 
     u = 1:nu; % u direction on the detector plane
     v = 1:nv; % v direction on the detector plan
@@ -85,12 +88,16 @@ for view = 1:n_view
     %   - zd: array of z-coordinates for detector plane
     %   - nu: the number of pixels in u direction on detector
     %   - nv: the number of pixels in v direction on detector
-    
     prj = siddon_kernel(vol, x_plane, y_plane, z_plane, ...
-             xs, ys, zs, xd, yd, zd, nu, nv);
+             xs, ys, zs, xd, yd, zd, nu, nv, dx, dy, dz);
+
+    if mod(view,10)==0
+        fprintf('Finished view %d/%d\n', view, n_view);
+    end
 
     projections(:,:,view) = prj;
 end
+    
 
 
 
@@ -105,6 +112,8 @@ x_plane = ((0:nx) - nx/2) * dx; % note that we go from -nx/2 to +nx/2
 y_plane = ((0:ny) - ny/2) * dy;
 z_plane = ((0:nz) - nz/2) * dz;
 projections = gpuArray(zeros(nu, nv, n_view, 'double'));
+
+
 
 h = figure; 
 for view = 1:n_view
