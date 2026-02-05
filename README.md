@@ -19,5 +19,11 @@ Like I said previously, this project is honestly the culmination of my education
 
 ## ⚙️ Acceleration
 - siddon_kernel.cpp: this cpp kernel accelerates the classic Siddon forward projection which takes around give or take a few hours on my device to just 10 minutes. For those wondering why, cpp runs closer to the CPU than MATLAB so the execution time is shortened by a lot.
-- fdk_kernel.cu: this is a CUDA kernel meant to accelerate FDK reconstruction. The projected reconstruction time should be around 5-10 seconds.  
+- fdk_kernel.cu: this is a CUDA kernel meant to accelerate FDK reconstruction. The projected reconstruction time should be around 5-10 seconds.
+
+## ⬇️ Downloads
+- mingw-84 so that Matlab can use Mex to call C++ code
+- Visual Studio Build tools so that Matlab can call CUDA
+- CUDA toolkit (whatever version is compatible with the specific version of Matlab)
+- Visual Studio (so that you can use the full functionality of CUDA)
 
