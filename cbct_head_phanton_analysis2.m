@@ -1,5 +1,5 @@
 %% data importation and declaring necessary varibles
-
+clear;
 indir = 'C:\Users\Nathan Cao\OneDrive\Desktop\ct images analysis\cbct_head_phantom\DCT_HEAD_CLEAR_NAT_FILL_FULL_HU_NORMAL_[AX3D]_0009\';
 out_filename = '.\projections.raw';
 files = dir([indir '*.IMA']);
@@ -90,17 +90,11 @@ for view = 1:n_view
     %   - nv: the number of pixels in v direction on detector
     prj = siddon_kernel(vol, x_plane, y_plane, z_plane, ...
              xs, ys, zs, xd, yd, zd, nu, nv, dx, dy, dz);
-
+    projections(:,:,view) = prj;
     if mod(view,10)==0
         fprintf('Finished view %d/%d\n', view, n_view);
     end
-
-    projections(:,:,view) = prj;
 end
-    
-
-
-
 
 %% siddon algorithm
 fid = fopen(out_filename, 'w');
@@ -188,83 +182,40 @@ for view = 1:n_view
         end
     end
     projections(:,:,view) = prj;
-    imshow(prj',[0 5]);
-    title_str = sprintf('Calculating view #%d/%d (angle = %.0f deg)\n',view, n_view, theta/pi*180);
-    title(title_str); 
-    set(h,'position',[200 200 700 600]); pause(0.5);
-    fwrite(fid, prj, 'double');
+    %imshow(prj',[0 5]);
+    %title_str = sprintf('Calculating view #%d/%d (angle = %.0f deg)\n',view, n_view, theta/pi*180);
+    %title(title_str); 
+    %set(h,'position',[200 200 700 600]); pause(0.5);
+    %fwrite(fid, prj, 'double');
+    disp("one done")
 end
 fclose(fid);
 
-%% FASTER reconstruction of the ct volume
-% define the reconstructed volume
-recon = gpuArray.zeros(nx, ny, nz, 'single');
 
-% define the ramp filter
-% idea here: we use a ramp filter because fbp intrinsically emphasizes low
-% frequency components while blurring out higher frequencies, which makes
-% something like a ramp filter ideal since it gives edges more definition
-freq = gpuArray((-nu/2:nu/2-1)'/(nu*du));
-ramp = abs(freq);
+%% fdk reconstruction with cpp kernel
 
-% define the views, thetas, and the pixels
-view = gpuArray(1:n_view);
-theta = theta_array(view);
-nu_gpu = gpuArray(1:nu);
-nv_gpu = gpuArray(1:nv);
+% call the fdk cuda kernel
+mex fdk_kernel.cu
 
-% go pixel by pixel and weight the reconstruction by distance
-weight = sid / sqrt(sid^2 + ((u-nu/2)*du)^2 + ((v-nv/2)*dv)^2);
-projections(nu_gpu,nv_gpu,view) = projections(nu_gpu,nv_gpu,view) * weight;
+% set the reconstruction array as a gpu array
+recon_gpu = gpuArray.zeros(nx,ny,nz,'single');
 
-% do ramp filtering on the image to increase edge defintion
-% ramp filter by definition is centered on 0 frequency although we could
-% prolly find the center spatial frequency of an image and create a ramp
-% around that too
-freq_centered_proj = fftshift(fft(projections(:, nv_gpu, view)));
-freq_centered_proj = freq_centered_proj .* ramp; 
-projections(:, nv_gpu, view) = real(ifft(ifftshift(freq_centered_proj)));
+% loop through the views as a 
+for view = 1:n_view
+    % get the projection from a specific view
+    proj_gpu  = gpuArray(projections(:,:,view));
+    
+    % get the angle associated with this view
+    theta = theta_array(view);
 
-% do fdk on the image PICK UP HERE, after we finish siddon
-
-
-% do filtered back projection
-    for ix = 1:nx
-        x = (ix-nx/2)*dx;
-        for iy = 1:ny
-            y = (iy-ny/2)*dy;
-            for iz = 1:nz
-                z = (iz-nz/2)*dz;
-
-                xs = sid*cos(theta);
-                ys = sid*sin(theta);
-
-                denom = sid - x*cos(theta) - y*sin(theta);
-                if denom <= 0, continue; end
-
-                u = (sdd/denom)*( -x*sin(theta) + y*cos(theta) )/du + nu/2;
-                v = (sdd/denom)*z/dv + nv/2;
-
-                iu = round(u);      
-                iv = round(v);
-
-                if (iu >= 1) && (iu <= nu) && (iv >= 1) && (iv <= nv)
-                    recon(ix,iy,iz) = recon(ix,iy,iz) + projections(iu,iv,view)*(sid^2/denom^2);
-                end
-            end
-        end
-    end
+    % run fdk on that view, we don't define plhs in cpp/cuda, so don't
+    % assign output
+    fdk_mex(proj_gpu, recon_gpu, nx, ny, nz, nu, nv, dx, dy, dz, du, dv, sid, sdd, theta);
+end
 
 
 
-recon = recon * (2*pi/n_view);
-
-
-%% reconstruction of the ct volume
-% all views within five minutes
-% simulate all views 
-% faster
-
+%% fdk reconstruction of the ct volume
 % define the reconstructed volume
 recon = zeros(nx, ny, nz, 'single');
 
@@ -275,7 +226,7 @@ recon = zeros(nx, ny, nz, 'single');
 freq = (-nu/2:nu/2-1)'/(nu*du);
 ramp = abs(freq);
 
-% go through the different projects and do FBP
+% go through the different projects and do fdk
 for view = 1:n_view
     theta = theta_array(view);
 
@@ -303,7 +254,7 @@ for view = 1:n_view
         projections(:,v,view) = real(ifft(ifftshift(P)));
     end
 
-    % do filtered back projection
+    % do fdk
     for ix = 1:nx
         x = (ix-nx/2)*dx;
         for iy = 1:ny
