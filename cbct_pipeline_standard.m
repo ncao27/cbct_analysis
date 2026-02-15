@@ -31,71 +31,6 @@ end
 vol = vol + header.RescaleIntercept;
 vol = (vol + 1000) / 1000 * mu_water;        % this step is to convert the HU to mu. 
 
-%% siddon with cpp kernel
-
-mex siddon_kernel.cpp
-
-x_plane = double(((0:nx) - nx/2) * dx); % note that we go from -nx/2 to +nx/2
-y_plane = double(((0:ny) - ny/2) * dy);
-z_plane = double(((0:nz) - nz/2) * dz);
-projections = zeros(nu, nv, n_view, 'double');
-
-nWorkers = 4;   % small!
-viewsPerWorker = ceil(n_view / nWorkers);
-
-
-for view = 1:n_view
-
-    theta = theta_array(view);
-    fprintf('Calculating view #%d/%d (angle = %.0f deg)\n',view, n_view, theta/pi*180);
-    % -------------------------
-    % Source position
-    % -------------------------
-    xs = sid * cos(theta);
-    ys = sid * sin(theta);
-    zs = 0;
-
-    % -------------------------
-    % Detector center
-    % -------------------------
-    xd0 = xs - (sdd/sid) * xs;
-    yd0 = ys - (sdd/sid) * ys;
-    zd0 = 0;
-
-    ux = cos(theta - pi/2); %  unit vector
-    uy = sin(theta - pi/2);
-
-    u = 1:nu; % u direction on the detector plane
-    v = 1:nv; % v direction on the detector plan
-
-    % we preallocate the x,y,z coordinates of each detector pixel, and then
-    % loop through them using the cpp kernel
-    xd = xd0 + (u - (nu/2+0.5)) * du * ux; 
-    yd = yd0 + (u - (nu/2+0.5)) * du * uy;
-    zd = zd0 + (v - (nv/2+0.5)) * dv;
-    
-    % cpp kernel doing siddon reconstruction
-    % Inputs:
-    %   - vol: the CT volume that we read in
-    %   - x_plane: the x-dir planes that we define for voxels
-    %   - y_plane: the y-dir planes that we define for voxels
-    %   - z_plane: the z-dir planes that we define for voxels
-    %   - xs: the x-coord of point source
-    %   - ys: the y-coord of point source
-    %   - zs: the z-coord of point source
-    %   - xd: array of x-coordinates for detector plane
-    %   - yd: array of y-coordinates for detector plane
-    %   - zd: array of z-coordinates for detector plane
-    %   - nu: the number of pixels in u direction on detector
-    %   - nv: the number of pixels in v direction on detector
-    prj = siddon_kernel(vol, x_plane, y_plane, z_plane, ...
-             xs, ys, zs, xd, yd, zd, nu, nv, dx, dy, dz);
-    projections(:,:,view) = prj;
-    if mod(view,10)==0
-        fprintf('Finished view %d/%d\n', view, n_view);
-    end
-end
-
 %% siddon algorithm
 fid = fopen(out_filename, 'w');
 
@@ -191,31 +126,8 @@ for view = 1:n_view
 end
 fclose(fid);
 
-
-%% fdk reconstruction with cpp kernel
-
-% call the fdk cuda kernel
-mex fdk_kernel.cu
-
-% set the reconstruction array as a gpu array
-recon_gpu = gpuArray.zeros(nx,ny,nz,'single');
-
-% loop through the views as a 
-for view = 1:n_view
-    % get the projection from a specific view
-    proj_gpu  = gpuArray(projections(:,:,view));
-    
-    % get the angle associated with this view
-    theta = theta_array(view);
-
-    % run fdk on that view, we don't define plhs in cpp/cuda, so don't
-    % assign output
-    fdk_mex(proj_gpu, recon_gpu, nx, ny, nz, nu, nv, dx, dy, dz, du, dv, sid, sdd, theta);
-end
-
-
-
 %% fdk reconstruction of the ct volume
+
 % define the reconstructed volume
 recon = zeros(nx, ny, nz, 'single');
 
@@ -284,10 +196,3 @@ for view = 1:n_view
 end
 
 recon = recon * (2*pi/n_view);
-%% visualization
-slice = round(nz/2);
-figure;
-imshow(recon(:,:,slice),[]); colormap gray;
-title('Reconstructed slice');
-%%
-gpuDevice
