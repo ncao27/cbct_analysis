@@ -1,4 +1,6 @@
-%% data importation and declaring necessary varibles
+clear;
+
+%% data importation and declaring necessary variables
 clear;
 indir = 'C:\Users\Nathan Cao\OneDrive\Desktop\ct images analysis\cbct_head_phantom\DCT_HEAD_CLEAR_NAT_FILL_FULL_HU_NORMAL_[AX3D]_0009\';
 out_filename = '.\projections.raw';
@@ -126,6 +128,10 @@ for view = 1:n_view
 end
 fclose(fid);
 
+%% visualize slices of the forward projection
+imagesc(projections(:, :, 120)')
+axis image
+
 %% fdk reconstruction of the ct volume
 
 % define the reconstructed volume
@@ -194,5 +200,67 @@ for view = 1:n_view
     end
     disp(view)
 end
-
 recon = recon * (2*pi/n_view);
+
+%% for algorithmic testing purposes: do fbp reconstruction of one slice
+% so currently the projects matrix is of size 620 by 480 by 360, idk 
+% why exactly we did this, but basically 620 is the number of columns
+% and 480 is the number of rows, nu is horizontal along the detector 
+% axis and nv is verticle along the detector axis
+% so first we can take one particular row (ie one slice) of the detector
+% projections and all 360 projections, so that would give us a matrix 
+% of 620 by 360
+
+slice = projections(:, ceil(nv / 2), :);    % get middle slice
+slice = squeeze(slice);                     % get rid of third dim
+
+recon = zeros(nx, ny, 'single');
+freq = (-nu/2:nu/2-1)'/(nu*du);
+ramp = abs(freq);
+
+for view = 1:n_view
+
+    % get the angle that detector panel is at
+    theta = theta_array(view);
+
+    for u = 1:nu
+        % define weight
+        w = sid / sqrt(sid^2 + ((u-nu/2)*du)^2);
+        
+        % weigh voxels
+        slice(u, view) = slice(u, view)*w;
+    end
+
+    % do ramp filtering
+    P = fftshift(fft(slice(:,view)));
+    P = P .* ramp;
+    slice(:,view) = real(ifft(ifftshift(P)));
+
+    % do fbp reconstruction
+    for ix = 1:nx
+        x = (ix - nx/2)*dx;
+        for iy = 1:ny
+            y = (iy - ny/2)*dy;
+
+            xs = sid*cos(theta);
+            xy = sid*cos(theta);
+
+            denom = sid - x*cos(theta) - y*sin(theta);
+            if denom <= 0, continue; end
+
+            u = (sdd/denom)*( -x*sin(theta) + y*cos(theta) )/du + nu/2;
+
+            iu = round(u);
+
+            if (iu >= 1) && (iu <= nu)
+                recon(ix, iy) = recon(ix, iy) + slice(iu, view)*(sid^2/denom^2);
+            end
+        end
+    end
+
+    disp(view)
+end
+recon = recon * (2*pi / n_view);
+%%
+imagesc(recon)
+axis image
