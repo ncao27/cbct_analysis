@@ -186,7 +186,7 @@ for view = 1:n_view
                 denom = sid - x*cos(theta) - y*sin(theta);
                 if denom <= 0, continue; end
 
-                u = (sdd/denom)*( -x*sin(theta) + y*cos(theta) )/du + nu/2;
+                u = (sdd/denom)*( -x*sin(theta) + y*cos(theta) )/du + nu/2; % NOTE: had to flip x and y signs here for fbp
                 v = (sdd/denom)*z/dv + nv/2;
 
                 iu = round(u);      
@@ -202,7 +202,7 @@ for view = 1:n_view
 end
 recon = recon * (2*pi/n_view);
 
-%% for algorithmic testing purposes: do fbp reconstruction of one slice
+%% for algorithmic testing purposes: do fbp reconstruction of one slice (fan beam CT, not cone beam)
 % so currently the projects matrix is of size 620 by 480 by 360, idk 
 % why exactly we did this, but basically 620 is the number of columns
 % and 480 is the number of rows, nu is horizontal along the detector 
@@ -211,7 +211,7 @@ recon = recon * (2*pi/n_view);
 % projections and all 360 projections, so that would give us a matrix 
 % of 620 by 360
 
-slice = projections(:, ceil(nv / 2), :);    % get middle slice
+slice = projections(:, 240, :);    % get middle slice
 slice = squeeze(slice);                     % get rid of third dim
 
 recon = zeros(nx, ny, 'single');
@@ -243,12 +243,12 @@ for view = 1:n_view
             y = (iy - ny/2)*dy;
 
             xs = sid*cos(theta);
-            xy = sid*cos(theta);
+            ys = sid*sin(theta);
 
             denom = sid - x*cos(theta) - y*sin(theta);
             if denom <= 0, continue; end
 
-            u = (sdd/denom)*( -x*sin(theta) + y*cos(theta) )/du + nu/2;
+            u = (sdd/denom)*( x*sin(theta) - y*cos(theta) )/du + nu/2;
 
             iu = round(u);
 
@@ -262,5 +262,13 @@ for view = 1:n_view
 end
 recon = recon * (2*pi / n_view);
 %%
-imagesc(recon)
-axis image
+figure;
+imagesc(recon);      
+colormap(gray);    
+colorbar; 
+
+%%
+figure;
+imagesc(squeeze(vol(:, 256, :)))
+colormap(gray)
+colorbar;
