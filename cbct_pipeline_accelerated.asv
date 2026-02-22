@@ -46,30 +46,8 @@ lesion_cz = (nz / 2);   % lesion center in z-coordinates
 % convert lesion radius from mm to voxels
 lesion_rx = lesion_radius / dx;     % number of lesion voxels in the x-direction
 lesion_ry = lesion_radius / dy;     % number of lesion voxels in the y-direction
-lesion_rz = lesion_radius / dz;     % number of lesion voxels in the z-direction 
+lesion_rz = lesion_radius / dz
 
-% generate a mask for the lesion:
-[X, Y, Z] = ndgrid(1:nx, 1:ny, 1:nz);   % generate the mask grid first
-
-% define the mask for the sphere (notice it's just sphere equation)
-% also this makes mask into a logical mask of 0's and 1's
-mask = ((X - lesion_cx).^2 / lesion_rx^2 + ...
-        (Y - lesion_cy).^2 / lesion_ry^2 + ...
-        (Z - lesion_cz).^2 / lesion_rz^2) <= 1;
-
-% add mask to volume
-%vol(mask) = lesion_mu;
-
-% add contrast to the lesion
-contrast = 0.003;   % add 0.003 1/mm
-vol(mask) = vol(mask) + contrast;
-
-% smooth the edges of the lesion
-sigma = 1;
-mask_smooth = imgaussfilt3(double(mask), sigma);
-contrast = 0.003;   % add 0.003 1/mm
-vol(mask) = vol(mask) + contrast;
-vol = vol .* (1 - mask_smooth) + lesion_mu * mask_smooth;
 
 %% siddon with cpp kernel
 
@@ -163,7 +141,4 @@ figure;
 imshow(recon(:,:,slice),[]); colormap gray;
 title('Reconstructed slice');
 %%
-figure;
-imagesc(squeeze(vol(:, 256, :)))
-colormap(gray)  
-colorbar;
+gpuDevice
