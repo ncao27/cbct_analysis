@@ -1,38 +1,12 @@
 #include "mex.h"
 #include "cuda_runtime.h"
+#include "gpu/mxGPUArray.h"
 #include <cmath>
 #include <vector>
 #include <omp.h> 
 
-void weigh_dist()
-/*
-This function takes in the forward projection and weighs each pixel by its distance. 
-*/
-{
 
-}
-
-void ramp_filter()
-/*
-Performs a ramp filter by using the fft on the forward projections
-*/
-{
-
-}
-
-/*
-% do ramp filtering
-    for v = 1:nv
-        
-        % first do fft to frequency domain, then center projections on zero
-        P = fftshift(fft(projections(:,v,view)));
-        P = P .* ramp;
-
-        % ifft the projects back
-        projections(:,v,view) = real(ifft(ifftshift(P)));
-    end*/
-
-__global__ fdk_backproj_kernel(
+__global__ void fdk_backproj_kernel(
     const float* proj,   // [nu * nv]
     float* recon,        // [nx * ny * nz]
     int nx, int ny, int nz,
@@ -46,7 +20,7 @@ __global__ fdk_backproj_kernel(
 The kernel that executes fdk. 
 */
 {
-    // Explanatio: in the mexFunction, we declared the grid dimensions (how 
+    // Explanation: in the mexFunction, we declared the grid dimensions (how 
     // many blocks there are) and the number of threads per block. So here 
     // we are basically setting the thread that is being used. This is equivalent
     // to a for loop except without explicity defining a for loop. The whole idea
@@ -58,24 +32,59 @@ The kernel that executes fdk.
     // safeguard to stop executing this thread if ix, iy, iz go out of bounds
     if (ix >= nx || iy >= ny || iz >= nz) return;
 
-    // voxel position
-    float x = (ix - nx/2.0f) * dx;
-    float y = (iy - ny/2.0f) * dy;
-    float z = (iz - nz/2.0f) * dz;
+    // voxel position, 2.0f means float literal
+    float x = (ix - (nx - 1)/2.0f) * dx;
+    float y = (iy - (ny - 1)/2.0f) * dy;
+    float z = (iz - (nz - 1)/2.0f) * dz;
 
-    // get the angles 
+    // get the angles, we do cosf to do 32-bit math which is faster
     float cosT = cosf(theta);
     float sinT = sinf(theta);
 
+    // the denominator for CBCT, if it's less than 0 exit
+    float denom = sid - x*cosT - y*sinT;
+    if (denom <= 0.0f) return;
+
+    // the u and v detector pixels that corresponds to the voxel
+    float u = (sdd / denom) * (x*sinT - y*cosT) / du + (nu - 1)/2.0f;
+    float v = (sdd / denom) * z / dv + (nv - 1)/2.0f;
+
+    // round it because the above gives a floating point number
+    int iu = (int) roundf(u);
+    int iv = (int) roundf(v);
+    /*
+    int iu0 = floorf(u);
+int iv0 = floorf(v);
+float du = u - iu0;
+float dv = v - iv0;*/
+
+    // check if the calculations are actually within the bounds of the detector panel or not
+    if (iu < 0 || iu >= nu || iv < 0 || iv >= nv) return;
+
+    // find the index number corresponding to the projection and the volume 
+    int projIdx = iu + iv * nu;
+    int volIdx  = ix + iy * nx + iz * nx * ny;
+
+    // define the weighting factor of the specific pixel
+    float w = (sid * sid) / (denom * denom);
+
+    // add the contribution
+    recon[volIdx] += proj[projIdx] * w;
 }
 
 void mexFunction(int nlhs, mxArray* plhs[],
                  int nrhs, const mxArray* prhs[])
 {
-    mexPrintf("Hello from C++ Siddon!\n");
 
-    float* d_proj  = (float*) mxGPUGetDataReadOnly(prhs[0]);
-    float* d_recon = (float*) mxGPUGetData(prhs[1]);
+    mxInitGPU();
+
+    // Convert MATLAB gpuArray inputs to mxGPUArray
+    const mxGPUArray* projGPU  = mxGPUCreateFromMxArray(prhs[0]);
+    mxGPUArray* reconGPU = (mxGPUArray*) mxGPUCreateFromMxArray(prhs[1]);
+
+    // Get device pointers
+    const float* d_proj = (const float*) mxGPUGetDataReadOnly(projGPU);
+    float* d_recon = (float*) mxGPUGetData(reconGPU);
 
     // get the number of grid points
     int nx = (int) mxGetScalar(prhs[2]);

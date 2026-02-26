@@ -173,6 +173,11 @@ for view = 1:n_view
     end
 
     % do fdk
+    % Realize here that we are looping through voxels in the volume. Why?
+    % Because the source projects rays that enter the volume and fall
+    % specifically on specific pixels on the detector. For each voxel, we
+    % look at which detector pixel the ray falls on and add up that
+    % contribution. 
     for ix = 1:nx
         x = (ix-nx/2)*dx;
         for iy = 1:ny
