@@ -71,6 +71,18 @@ contrast = 0.003;   % add 0.003 1/mm
 vol(mask) = vol(mask) + contrast;
 vol = vol .* (1 - mask_smooth) + lesion_mu * mask_smooth;
 
+%% lesion insertion
+% Notes to self: so lesion insertion above is actually wrong
+% Create 3D lesion volume -> project the lesion -> 
+% Do some kind of filtering: Gaussian blurring (basic, but it helps soften the edges around the 
+% manually created lesion), Poisson editing (preserves the intensity changes of the inserted lesion)
+% MTF filtering (good because it takes the CT scanner's measured MTF and probably convolves it with
+% the image), NPS filtering (using the measured noise of the CT scanner, since a lot of noise is not 
+% random white noise but structured noise, you do some transfer function / filtering using the
+% measured noise)
+
+
+
 %% siddon with cpp kernel
 
 mex siddon_kernel.cpp
