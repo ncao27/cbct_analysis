@@ -65,20 +65,15 @@ mask = ((X - lesion_cx).^2 / lesion_rx^2 + ...
 % <=1 makes it logical, convert it to double
 mask = double(mask);
 
-%% Projection domain lesion insertion
-
-%% siddon with cpp kernel
+%% Siddon + Projection Domain Lesion Insertion with C++ Kernel
 
 mex siddon_kernel.cpp
 
 x_plane = double(((0:nx) - nx/2) * dx); % note that we go from -nx/2 to +nx/2
 y_plane = double(((0:ny) - ny/2) * dy);
 z_plane = double(((0:nz) - nz/2) * dz);
-projections = zeros(nu, nv, n_view, 'double');
-
-nWorkers = 4;   % small!
-viewsPerWorker = ceil(n_view / nWorkers);
-
+projections_vol = zeros(nu, nv, n_view, 'double');
+projections_les = zeros(nu, nv, n_view, 'double');
 
 for view = 1:n_view
 
@@ -110,7 +105,7 @@ for view = 1:n_view
     yd = yd0 + (u - (nu/2+0.5)) * du * uy;
     zd = zd0 + (v - (nv/2+0.5)) * dv;
     
-    % cpp kernel doing siddon reconstruction
+    % C++ kernel doing siddon reconstruction
     % Inputs:
     %   - vol: the CT volume that we read in
     %   - x_plane: the x-dir planes that we define for voxels
@@ -124,13 +119,26 @@ for view = 1:n_view
     %   - zd: array of z-coordinates for detector plane
     %   - nu: the number of pixels in u direction on detector
     %   - nv: the number of pixels in v direction on detector
-    prj = siddon_kernel(vol, x_plane, y_plane, z_plane, ...
+
+    % find projections of the volume
+    prj_vol = siddon_kernel(vol, x_plane, y_plane, z_plane, ...
              xs, ys, zs, xd, yd, zd, nu, nv, dx, dy, dz);
-    projections(:,:,view) = prj;
+    
+    % find projections of the lesion
+    prj_les = siddon_kernel(vol, x_plane, y_plane, z_plane, ...
+             xs, ys, zs, xd, yd, zd, nu, nv, dx, dy, dz);
+    
+    % store projections
+    projections_vol(:,:,view) = prj_vol;
+    projections_les(:,:,view) = prj_vol;
+
     if mod(view,10)==0
         fprintf('Finished view %d/%d\n', view, n_view);
     end
 end
+
+%% Projections with lesion
+prj_w_lesion = projections_vol + projections_les;
 
 %% fdk reconstruction with CUDA kernel
 
