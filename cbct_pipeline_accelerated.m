@@ -71,8 +71,11 @@ mexcuda siddon_kernel.cu
 x_plane = double(((0:nx) - nx/2) * dx); % note that we go from -nx/2 to +nx/2
 y_plane = double(((0:ny) - ny/2) * dy);
 z_plane = double(((0:nz) - nz/2) * dz);
-projections_vol = zeros(nu, nv, n_view, 'double');
-projections_les = zeros(nu, nv, n_view, 'double');
+projections_vol = zeros(nu, nv, n_view, 'single');
+projections_les = zeros(nu, nv, n_view, 'single');
+
+% because CUDA converts it to float and vol used to be double
+vol = single(vol);
 
 for view = 1:n_view
 
@@ -120,13 +123,17 @@ for view = 1:n_view
     %   - nv: the number of pixels in v direction on detector
 
     % find projections of the volume
-    prj_vol = zeros(nu, nv, "double");
-    prj_les = zeros(nu, nv, "double");
+    prj_vol = gpuArray.zeros(nu, nv, "single");
+    prj_les = gpuArray.zeros(nu, nv, "single");
     siddon_kernel(vol, prj_vol, x_plane, y_plane, z_plane, ...
              xs, ys, zs, xd, yd, zd, nu, nv, dx, dy, dz);
-    siddon_kernel(vol, prj_les, x_plane, y_plane, z_plane, ...
-             xs, ys, zs, xd, yd, zd, nu, nv, dx, dy, dz);
-    
+    %siddon_kernel(vol, prj_les, x_plane, y_plane, z_plane, ...
+    %         xs, ys, zs, xd, yd, zd, nu, nv, dx, dy, dz);
+
+    % gather
+    prj_vol = gather(prj_vol);
+    prj_les = gather(prj_les);
+
     % store projections
     projections_vol(:,:,view) = prj_vol;
     projections_les(:,:,view) = prj_les;

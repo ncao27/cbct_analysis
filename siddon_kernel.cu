@@ -173,13 +173,36 @@ void mexFunction(int nlhs, mxArray *plhs[],
     const double dy = mxGetScalar(prhs[14]);
     const double dz = mxGetScalar(prhs[15]);
 
+    // we have to make the matlab cpu arrays into gpu arrays
+    double *d_x_plane, *d_y_plane, *d_z_plane;
+    double *d_xd, *d_yd, *d_zd;
+
+    cudaMalloc(&d_x_plane, (nx+1)*sizeof(double));
+    cudaMalloc(&d_y_plane, (ny+1)*sizeof(double));
+    cudaMalloc(&d_z_plane, (nz+1)*sizeof(double));
+
+    cudaMemcpy(d_x_plane, x_plane, (nx+1)*sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_y_plane, y_plane, (ny+1)*sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_z_plane, z_plane, (nz+1)*sizeof(double), cudaMemcpyHostToDevice);
+
+
+    cudaMalloc(&d_xd, nu*sizeof(double));
+    cudaMalloc(&d_yd, nu*sizeof(double));
+    cudaMalloc(&d_zd, nv*sizeof(double));
+
+    cudaMemcpy(d_xd, xd, nu*sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_yd, yd, nu*sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_zd, zd, nv*sizeof(double), cudaMemcpyHostToDevice);
+
+
+
     // we now define the number of threads and number of blocks used
     // matlab goes though each view, so realistically we only worry about one panel
     // 400 < 1024 threads per block, still valid
-    dim3 block(20,20);
+    dim3 block(16,16);
     dim3 grid(
-        (nu + 19)/20,
-        (nv + 19)/20
+        (nu + 15)/16,
+        (nv + 15)/16
     );
 
     // call the siddon_kernel
@@ -188,8 +211,17 @@ void mexFunction(int nlhs, mxArray *plhs[],
         nx, ny, nz,
         nu, nv,
         dx, dy, dz,
-        x_plane, y_plane, z_plane,
+        d_x_plane, d_y_plane, d_z_plane,
         xs, ys, zs,
-        xd, yd, zd
+        d_xd, d_yd, d_zd
     );
+
+    // get real time feedback of where the error comes from
+    cudaDeviceSynchronize();
+    cudaError_t err = cudaGetLastError();
+
+    if (err != cudaSuccess) {
+        mexErrMsgIdAndTxt("CUDA:siddon_kernel",
+            cudaGetErrorString(err));
+    }
 }
