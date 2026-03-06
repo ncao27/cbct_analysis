@@ -31,10 +31,15 @@ end
 vol = vol + header.RescaleIntercept;
 vol = (vol + 1000) / 1000 * mu_water;        % this step is to convert the HU to mu. 
 
-%% manually insert lesion into image
-% the idea is that a lesion just has different attenuation coefficient than
-% soft tissue, so we want to create a 3D spatial mask to represent the
-% lesion and overlay it with the original image?
+%% Define lesion
+% Notes to self: so lesion insertion above is actually wrong
+% Create 3D lesion volume -> project the lesion -> 
+% Do some kind of filtering: Gaussian blurring (basic, but it helps soften the edges around the 
+% manually created lesion), Poisson editing (preserves the intensity changes of the inserted lesion)
+% MTF filtering (good because it takes the CT scanner's measured MTF and probably convolves it with
+% the image), NPS filtering (using the measured noise of the CT scanner, since a lot of noise is not 
+% random white noise but structured noise, you do some transfer function / filtering using the
+% measured noise)
 
 % define parameters
 lesion_radius = 10;     % (mm)
@@ -57,21 +62,10 @@ mask = ((X - lesion_cx).^2 / lesion_rx^2 + ...
         (Y - lesion_cy).^2 / lesion_ry^2 + ...
         (Z - lesion_cz).^2 / lesion_rz^2) <= 1;
 
-% add mask to volume
-%vol(mask) = lesion_mu;
+% <=1 makes it logical, convert it to double
+mask = double(mask);
 
-% add contrast to the lesion
-contrast = 0.003;   % add 0.003 1/mm
-vol(mask) = vol(mask) + contrast;
-
-% smooth the edges of the lesion
-sigma = 1;
-mask_smooth = imgaussfilt3(double(mask), sigma);
-contrast = 0.003;   % add 0.003 1/mm
-vol(mask) = vol(mask) + contrast;
-vol = vol .* (1 - mask_smooth) + lesion_mu * mask_smooth;
-
-%% siddon with cpp kernel
+%% Siddon + Projection Domain Lesion Insertion with C++ Kernel
 
 mex siddon_kernel.cpp
 
@@ -128,9 +122,13 @@ for view = 1:n_view
     %   - zd: array of z-coordinates for detector plane
     %   - nu: the number of pixels in u direction on detector
     %   - nv: the number of pixels in v direction on detector
-    prj = siddon_kernel(vol, x_plane, y_plane, z_plane, ...
+    prj_vol = siddon_kernel(vol, x_plane, y_plane, z_plane, ...
              xs, ys, zs, xd, yd, zd, nu, nv, dx, dy, dz);
-    projections(:,:,view) = prj;
+    
+    prj_les = siddon_kernel(vol, x_plane, y_plane, z_plane, ...
+             xs, ys, zs, xd, yd, zd, nu, nv, dx, dy, dz);
+
+    projections(:,:,view) = prj_vol;
     if mod(view,10)==0
         fprintf('Finished view %d/%d\n', view, n_view);
     end
@@ -194,14 +192,16 @@ for view = 1:n_view
     fprintf('Finished view %d/%d\n', view, n_view);
 end
 
+%% Bring reconstructed volume back to CPU
+recon = gather(recon_gpu);   % bring back to CPU
 
+%% Scroll through visualization for reconstructed volume
+recon = squeeze(recon);
 
-%% visualization
-slice = round(nz/2);
 figure;
-imshow(recon_gpu(:, :, 100),[]); colormap gray;
-title('Reconstructed slice');
-%%
-recon = gather(recon_gpu);
-%%
-orthosliceViewer(recon)
+sliceViewer(recon);
+colormap gray;
+
+%% 3D visualization for reconstructed volume
+figure;
+volshow(recon);
