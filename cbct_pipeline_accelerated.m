@@ -31,10 +31,15 @@ end
 vol = vol + header.RescaleIntercept;
 vol = (vol + 1000) / 1000 * mu_water;        % this step is to convert the HU to mu. 
 
-%% manually insert lesion into image
-% the idea is that a lesion just has different attenuation coefficient than
-% soft tissue, so we want to create a 3D spatial mask to represent the
-% lesion and overlay it with the original image?
+%% Define lesion
+% Notes to self: so lesion insertion above is actually wrong
+% Create 3D lesion volume -> project the lesion -> 
+% Do some kind of filtering: Gaussian blurring (basic, but it helps soften the edges around the 
+% manually created lesion), Poisson editing (preserves the intensity changes of the inserted lesion)
+% MTF filtering (good because it takes the CT scanner's measured MTF and probably convolves it with
+% the image), NPS filtering (using the measured noise of the CT scanner, since a lot of noise is not 
+% random white noise but structured noise, you do some transfer function / filtering using the
+% measured noise)
 
 % define parameters
 lesion_radius = 10;     % (mm)
@@ -57,31 +62,10 @@ mask = ((X - lesion_cx).^2 / lesion_rx^2 + ...
         (Y - lesion_cy).^2 / lesion_ry^2 + ...
         (Z - lesion_cz).^2 / lesion_rz^2) <= 1;
 
-% add mask to volume
-%vol(mask) = lesion_mu;
+% <=1 makes it logical, convert it to double
+mask = double(mask);
 
-% add contrast to the lesion
-contrast = 0.003;   % add 0.003 1/mm
-vol(mask) = vol(mask) + contrast;
-
-% smooth the edges of the lesion
-sigma = 1;
-mask_smooth = imgaussfilt3(double(mask), sigma);
-contrast = 0.003;   % add 0.003 1/mm
-vol(mask) = vol(mask) + contrast;
-vol = vol .* (1 - mask_smooth) + lesion_mu * mask_smooth;
-
-%% lesion insertion
-% Notes to self: so lesion insertion above is actually wrong
-% Create 3D lesion volume -> project the lesion -> 
-% Do some kind of filtering: Gaussian blurring (basic, but it helps soften the edges around the 
-% manually created lesion), Poisson editing (preserves the intensity changes of the inserted lesion)
-% MTF filtering (good because it takes the CT scanner's measured MTF and probably convolves it with
-% the image), NPS filtering (using the measured noise of the CT scanner, since a lot of noise is not 
-% random white noise but structured noise, you do some transfer function / filtering using the
-% measured noise)
-
-
+%% Projection domain lesion insertion
 
 %% siddon with cpp kernel
 
