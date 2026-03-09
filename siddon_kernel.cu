@@ -135,74 +135,61 @@ void mexFunction(int nlhs, mxArray *plhs[],
 {
     mxInitGPU();
 
-    // Convert MATLAB volume into GPU array (volume, projection array with zeros)
+    // 1. Create mxGPUArray wrappers for all arrays coming from MATLAB
     const mxGPUArray* volGPU  = mxGPUCreateFromMxArray(prhs[0]);
-    mxGPUArray* projGPU = (mxGPUArray*) mxGPUCreateFromMxArray(prhs[1]);
+    mxGPUArray* projGPU       = const_cast<mxGPUArray*>(mxGPUCreateFromMxArray(prhs[1]));
+    const mxGPUArray* xpGPU   = mxGPUCreateFromMxArray(prhs[2]);
+    const mxGPUArray* ypGPU   = mxGPUCreateFromMxArray(prhs[3]);
+    const mxGPUArray* zpGPU   = mxGPUCreateFromMxArray(prhs[4]);
+    const mxGPUArray* xdGPU   = mxGPUCreateFromMxArray(prhs[8]);
+    const mxGPUArray* ydGPU   = mxGPUCreateFromMxArray(prhs[9]);
+    const mxGPUArray* zdGPU   = mxGPUCreateFromMxArray(prhs[10]);
 
-    // Get GPU device pointers so that CUDA kernel an access the data
-    const float* d_vol = (const float*) mxGPUGetDataReadOnly(volGPU);
-    float* d_proj = (float*) mxGPUGetData(projGPU);
+    // 2. Extract the actual read/write pointers for CUDA
+    const float* d_vol   = (const float*) mxGPUGetDataReadOnly(volGPU);
+    float* d_proj        = (float*) mxGPUGetData(projGPU);
+    const float* x_plane = (const float*) mxGPUGetDataReadOnly(xpGPU);
+    const float* y_plane = (const float*) mxGPUGetDataReadOnly(ypGPU);
+    const float* z_plane = (const float*) mxGPUGetDataReadOnly(zpGPU);
+    const float* xd      = (const float*) mxGPUGetDataReadOnly(xdGPU);
+    const float* yd      = (const float*) mxGPUGetDataReadOnly(ydGPU);
+    const float* zd      = (const float*) mxGPUGetDataReadOnly(zdGPU);
 
-    // get dimensions of the volume
+    // 3. Get Dimensions and Scalars
     int nx = (int)mxGetDimensions(prhs[0])[0];
     int ny = (int)mxGetDimensions(prhs[0])[1];
     int nz = (int)mxGetDimensions(prhs[0])[2];
 
-    // get the x_plane, y_plane, and z_plane
-    const float* x_plane = (const float*) mxGetData(prhs[2]);
-    const float* y_plane = (const float*) mxGetData(prhs[3]);
-    const float* z_plane = (const float*) mxGetData(prhs[4]);
+    float xs = (float)mxGetScalar(prhs[5]);
+    float ys = (float)mxGetScalar(prhs[6]);
+    float zs = (float)mxGetScalar(prhs[7]);
 
-    // get the source coordinates
-    float xs = static_cast<float>(mxGetScalar(prhs[5]));
-    float ys = static_cast<float>(mxGetScalar(prhs[6]));
-    float zs = static_cast<float>(mxGetScalar(prhs[7]));
-
-    //get the detector coordinates
-    const float* xd = (const float*) mxGetData(prhs[8]);
-    const float* yd = (const float*) mxGetData(prhs[9]);
-    const float* zd = (const float*) mxGetData(prhs[10]);
-
-    // get the number of detector plane grid points
     int nu = (int) mxGetScalar(prhs[11]);
     int nv = (int) mxGetScalar(prhs[12]);
 
-    // get the grid point sizes of the volume
-    const float dx = mxGetScalar(prhs[13]);
-    const float dy = mxGetScalar(prhs[14]);
-    const float dz = mxGetScalar(prhs[15]);
+    float dx = (float) mxGetScalar(prhs[13]);
+    float dy = (float) mxGetScalar(prhs[14]);
+    float dz = (float) mxGetScalar(prhs[15]);
 
-    cudaMemcpy(d_xd, xd, nu*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_yd, yd, nu*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_zd, zd, nv*sizeof(float), cudaMemcpyHostToDevice);
-
-    // we now define the number of threads and number of blocks used
-    // matlab goes though each view, so realistically we only worry about one panel
-    // 400 < 1024 threads per block, still valid
+    // 4. Set up grid and launch kernel
     dim3 block(16,16);
-    dim3 grid(
-        (nu + 15)/16,
-        (nv + 15)/16
-    );
+    dim3 grid((nu + 15)/16, (nv + 15)/16);
 
-    // call the siddon_kernel
-    siddon_kernel<<<grid, block>>>(
-        d_vol, d_proj,
-        nx, ny, nz,
-        nu, nv,
-        dx, dy, dz,
-        x_plane, y_plane, z_plane,
-        xs, ys, zs,
-        xd, yd, zd
-    );
 
-    // get real time feedback of where the error comes from
     cudaDeviceSynchronize();
     cudaError_t err = cudaGetLastError();
-
     if (err != cudaSuccess) {
-        mexErrMsgIdAndTxt("CUDA:siddon_kernel",
-            cudaGetErrorString(err));
+        mexErrMsgIdAndTxt("CUDA:siddon_kernel", cudaGetErrorString(err));
     }
+
+    // 5. CRITICAL: Destroy the mxGPUArray wrappers to prevent memory leaks!
+    mxGPUDestroyGPUArray(volGPU);
+    mxGPUDestroyGPUArray(projGPU);
+    mxGPUDestroyGPUArray(xpGPU);
+    mxGPUDestroyGPUArray(ypGPU);
+    mxGPUDestroyGPUArray(zpGPU);
+    mxGPUDestroyGPUArray(xdGPU);
+    mxGPUDestroyGPUArray(ydGPU);
+    mxGPUDestroyGPUArray(zdGPU);
 
 }
