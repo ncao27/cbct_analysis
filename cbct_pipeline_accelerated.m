@@ -1,5 +1,6 @@
 %% data importation and declaring necessary varibles
 clear;
+reset(gpuDevice(1))             % clear lingering threads and kill extra processes
 indir = 'C:\Users\Nathan Cao\OneDrive\Desktop\ct images analysis\cbct_head_phantom\DCT_HEAD_CLEAR_NAT_FILL_FULL_HU_NORMAL_[AX3D]_0009\';
 out_filename = '.\projections.raw';
 files = dir([indir '*.IMA']);
@@ -36,15 +37,12 @@ vol = vol + header.RescaleIntercept;
 vol = (vol + 1000) / 1000 * mu_water;        % this step is to convert the HU to mu. 
 
 %% Lesion creation
-
 mask = lesion.sphere(nx, ny, nz, dx, dy, dz, lesion_radius);
 
 %% CUDA Siddon
-
 projections_vol = siddon.siddoncu(nx, ny, nz, dx, dy, dz, sid, sdd, du, dv, nu, nv, n_view, theta_array, vol);
 
 %% C++ Siddon
-
 projections_vol = siddon.siddoncpp(nx, ny, nz, dx, dy, dz, sid, sdd, du, dv, nu, nv, n_view, theta_array, vol);
 
 %% Projections with lesion
@@ -52,7 +50,7 @@ projections = projections_vol + projections_les;
 
 %% fdk reconstruction with CUDA kernel
 
-recon = recon.fdk(nx, ny, nz, dx, dy, dz, sid, sdd, du, dv, nu, nv, n_view, theta_array, projections);
+recon = recon.fdk(nx, ny, nz, dx, dy, dz, sid, sdd, du, dv, nu, nv, n_view, theta_array, projections_vol);
 
 %% Scroll through visualization for reconstructed volume
 recon = squeeze(recon);

@@ -175,6 +175,10 @@ void mexFunction(int nlhs, mxArray *plhs[],
     dim3 block(16,16);
     dim3 grid((nu + 15)/16, (nv + 15)/16);
 
+    siddon_kernel<<<grid, block>>>(
+        d_vol, d_proj, nx, ny, nz, nu, nv, dx, dy, dz,
+        x_plane, y_plane, z_plane, xs, ys, zs, xd, yd, zd
+    );
 
     cudaDeviceSynchronize();
     cudaError_t err = cudaGetLastError();
