@@ -6,13 +6,16 @@ imgs = dir([indir '*.raw']);
 lesion = dir([indir '*.jpg']);
 nx = 512;                       % number of pixels in x-dir (given)
 ny = 512;                       % number of pixels in y-dir (given)
-dx = single(400/512);           % x-dir pixel size (fov given)
-dy = single(400/512);           % y-dir pixel size (fov given)
+nz = 1;
+dx = 400/512;           % x-dir pixel size (fov given)
+dy = 400/512;           % y-dir pixel size (fov given)
+dz = dx;
 sid = 750;                      % Source-to-ISO Distance. unit: mm
 sdd = 1200;                     % Source-to-Detector Distance. unit: mm
 du = 0.154*4;                   % 2D detector pixel size. unit: mm 
-dv = 0.154*4;                   % 2D detector pixel size. unit: mm
-nu = 2480/4;                    % number of detector pixels along u (native: 1920 × 2480)          
+dv = dz;                        % 2D detector pixel size. unit: mm
+nu = 2480/4;                    % number of detector pixels along u (native: 1920 × 2480) 
+nv = 1;                         % number of detector pixels along v
 mu_water = 0.02;                % unit: 1/mm
 
 % we want 20 views, so we get 20 angles from 0 to 360
@@ -38,4 +41,15 @@ lesion = imread([indir lesion(1).name]);
 lesion = (lesion + 1000) / 1000 * mu_water;
 
 %% Forward Projection 
-disp(imgs(1).bytes)
+% Reminder to change args in if statement of cpp kernel (if (fabs(dxr) < 1e-12 && fabs(dyr) < 1e-12 && fabs(dzr) < 1e-12))
+
+projections = squeeze(siddon.siddoncpp(nx, ny, nz, dx, dy, dz, sid, sdd, du, dv, nu, nv, n_view, theta_array, img_without_lesion));
+
+%% F
+
+
+%%  
+imshow(projections,[])
+colormap gray
+xlabel('View angle')
+ylabel('Detector pixel')

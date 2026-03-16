@@ -53,6 +53,8 @@ function [projections] = siddoncpp(nx, ny, nz, dx, dy, dz, sid, sdd, du, dv, nu,
         %   - nv: the number of pixels in v direction on detector
     
         % find projections of the volume
+
+        vol = reshape(vol, [nx, ny, 1]);
         prj_vol = siddon_kernel(vol, x_plane, y_plane, z_plane, ...
                  xs, ys, zs, xd, yd, zd, nu, nv, dx, dy, dz);
         
