@@ -38,10 +38,23 @@ img_without_lesion = img_without_lesion';                           % transpose
 
 % store the segmented lesion image
 lesion = imread([indir lesion(1).name]);
-lesion = (lesion + 1000) / 1000 * mu_water;
 
-%% Forward Projection 
-projections = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, img_without_lesion));
+%% Image Without Lesion: Forward Projection
+projections_img = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, img_without_lesion));
+
+%% Segmented Lesion: Forward Projection
+% cast the lesion to type double
+lesion = double(lesion);
+
+% drop the white background 
+lesion(lesion == 150) = 0;
+
+projections_lesion = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, lesion));
+
+%% 
 
 %% FBP reconstruction
+reconstructed_img = recon.fbp(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, projections_img);
+%%
+viz.double(img_without_lesion)
 
