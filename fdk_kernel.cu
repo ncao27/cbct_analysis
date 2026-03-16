@@ -52,11 +52,6 @@ The kernel that executes fdk.
     // round it because the above gives a floating point number
     int iu = (int) roundf(u);
     int iv = (int) roundf(v);
-    /*
-    int iu0 = floorf(u);
-int iv0 = floorf(v);
-float du = u - iu0;
-float dv = v - iv0;*/
 
     // check if the calculations are actually within the bounds of the detector panel or not
     if (iu < 0 || iu >= nu || iv < 0 || iv >= nv) return;
