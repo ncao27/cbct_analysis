@@ -27,29 +27,21 @@ fid = fopen([indir imgs(1).name],'r','ieee-be');                % get fid of dat
 img_with_lesion = fread(fid, [nx ny],'single');                 % read data, 32-bit representation, so single precision
 fclose(fid);                                                    % close file
 img_with_lesion = img_with_lesion';                             % transpose
-img_with_lesion = (img_with_lesion + 1000) / 1000 * mu_water;   % convert
+%img_with_lesion = (img_with_lesion + 1000) / 1000 * mu_water;   % no need for conversion, it's already good 
 
 % store the without lesion image
 fid = fopen([indir imgs(2).name],'r','ieee-be');                    % get fid of data (raw), 'ieee-be' reads big-endian style data
 img_without_lesion = fread(fid, [nx ny],'single');                  % read data, 32-bit representation, so single precision
 fclose(fid);                                                        % close file
 img_without_lesion = img_without_lesion';                           % transpose
-img_without_lesion = (img_without_lesion + 1000) / 1000 * mu_water; % convert
+%img_without_lesion = (img_without_lesion + 1000) / 1000 * mu_water; % no need for conversion, it's already good 
 
 % store the segmented lesion image
 lesion = imread([indir lesion(1).name]);
 lesion = (lesion + 1000) / 1000 * mu_water;
 
 %% Forward Projection 
-% Reminder to change args in if statement of cpp kernel (if (fabs(dxr) < 1e-12 && fabs(dyr) < 1e-12 && fabs(dzr) < 1e-12))
+projections = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, img_without_lesion));
 
-projections = squeeze(siddon.siddoncpp(nx, ny, nz, dx, dy, dz, sid, sdd, du, dv, nu, nv, n_view, theta_array, img_without_lesion));
+%% FBP reconstruction
 
-%% F
-
-
-%%  
-imshow(projections,[])
-colormap gray
-xlabel('View angle')
-ylabel('Detector pixel')

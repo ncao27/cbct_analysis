@@ -1,4 +1,4 @@
-function [projections] = siddoncpp(nx, ny, nz, dx, dy, dz, sid, sdd, du, dv, nu, nv, n_view, theta_array, vol)
+function [projections] = siddoncpp_three(nx, ny, nz, dx, dy, dz, sid, sdd, du, dv, nu, nv, n_view, theta_array, vol)
     
     mex siddon_kernel.cpp
     
