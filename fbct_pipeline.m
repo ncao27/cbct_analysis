@@ -43,18 +43,81 @@ lesion = imread([indir lesion(1).name]);
 projections_img = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, img_without_lesion));
 
 %% Segmented Lesion: Forward Projection
-% cast the lesion to type double
+% make lesion grayscale instead of rgb
+if size(lesion, 3) == 3
+    lesion = rgb2gray(lesion);
+end
+
+% make lesion into double
 lesion = double(lesion);
 
-% drop the white background 
-lesion(lesion == 150) = 0;
+% invert the lesion, normalize lesion, make intensity 100% more than soft tissue
+lesion = (max(lesion, [], "all") - lesion) / max(lesion, [], "all") * mu_water;
 
-projections_lesion = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, lesion));
+% scale it down to it's actual width
+target_width = 20; 
+scale_factor = target_width / size(lesion, 2);
+lesion = imresize(lesion, scale_factor);
 
-%% 
+% Get the new, tiny dimensions
+[h_small, w_small] = size(lesion);
+
+% blank 512 by 512 canvas for the new lesion
+lesion_512 = zeros(512, 512, 'double');
+
+% define the position where we insert the lesion
+x_pos = 300; 
+y_pos = 350;
+
+% insert lesion onto canvas
+lesion_512(y_pos : y_pos+h_small-1, x_pos : x_pos+w_small-1) = lesion;
+
+% forward project the lesion
+projections_lesion = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, lesion_512));
+
+%% Filter / Blur the Projection Lesions
+
+
+%% Add 2D image and Lesion Projections Together
+projections_inserted = projections_img + projections_lesion;
 
 %% FBP reconstruction
-reconstructed_img = recon.fbp(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, projections_img);
-%%
-viz.double(img_without_lesion)
+reconstructed_img = recon.fbp(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, projections_inserted);
 
+
+%%
+% make lesion grayscale instead of rgb
+if size(lesion, 3) == 3
+    lesion = rgb2gray(lesion);
+end
+
+% make lesion into double
+lesion = double(lesion);
+
+% invert the lesion, normalize lesion, make intensity 10% more than soft tissue
+lesion = (max(lesion, [], "all") - lesion) / max(lesion, [], "all") * mu_water * 0.5;
+
+% scale it down to it's actual width
+target_width = 20; 
+scale_factor = target_width / size(lesion, 2);
+lesion = imresize(lesion, scale_factor);
+
+% Get the new, tiny dimensions
+[h_small, w_small] = size(lesion);
+
+% blank 512 by 512 canvas for the new lesion
+lesion_512 = zeros(512, 512, 'double');
+
+% define the position where we insert the lesion
+x_pos = 300; 
+y_pos = 350;
+
+% insert lesion onto canvas
+lesion_512(y_pos : y_pos+h_small-1, x_pos : x_pos+w_small-1) = lesion;
+
+imggg = lesion_512 + img_without_lesion;
+disp(max(imggg, [], "all"))
+viz.double(imggg)
+
+%%
+viz.double(reconstructed_img)
