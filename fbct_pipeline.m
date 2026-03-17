@@ -76,7 +76,7 @@ lesion_512(y_pos : y_pos+h_small-1, x_pos : x_pos+w_small-1) = lesion;
 projections_lesion = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, lesion_512));
 
 %% Filter / Blur the Projection Lesions
-sigma = 1;
+sigma = [1.5, 0.0001];
 
 % sigma: std dev, controls how soft the edges are
 % padding, circular: ensures the convolution wraps around and we do circular convolution
