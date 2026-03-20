@@ -24,14 +24,14 @@ theta_array = linspace(0, 2*pi, n_view);
 
 % store the with lesion image
 fid = fopen([indir imgs(1).name],'r','ieee-be');                % get fid of data (raw), 'ieee-be' reads big-endian style data
-img_with_lesion = fread(fid, [nx ny],'single');                 % read data, 32-bit representation, so single precision
+img_with_lesion = fread(fid, [nx ny],'float32');                 % read data, 32-bit representation, so single precision
 fclose(fid);                                                    % close file
 img_with_lesion = img_with_lesion';                             % transpose
 %img_with_lesion = (img_with_lesion + 1000) / 1000 * mu_water;   % no need for conversion, it's already good 
 
 % store the without lesion image
 fid = fopen([indir imgs(2).name],'r','ieee-be');                    % get fid of data (raw), 'ieee-be' reads big-endian style data
-img_without_lesion = fread(fid, [nx ny],'single');                  % read data, 32-bit representation, so single precision
+img_without_lesion = fread(fid, [nx ny],'float32');                  % read data, 32-bit representation, so single precision
 fclose(fid);                                                        % close file
 img_without_lesion = img_without_lesion';                           % transpose
 %img_without_lesion = (img_without_lesion + 1000) / 1000 * mu_water; % no need for conversion, it's already good 
@@ -39,8 +39,10 @@ img_without_lesion = img_without_lesion';                           % transpose
 % store the segmented lesion image
 lesion = imread([indir lesion(1).name]);
 
+P = phantom('Modified Shepp-Logan',512);
+
 %% Image Without Lesion: Forward Projection
-projections_img = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, img_without_lesion));
+projections_img = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, P));
 
 %% Segmented Lesion: Forward Projection
 % make lesion grayscale instead of rgb
@@ -76,7 +78,7 @@ lesion_512(y_pos : y_pos+h_small-1, x_pos : x_pos+w_small-1) = lesion;
 projections_lesion = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, lesion_512));
 
 %% Filter / Blur the Projection Lesions
-sigma = 1.5;
+sigma = [1.5, 0.0001];
 
 % sigma: std dev, controls how soft the edges are
 % padding, circular: ensures the convolution wraps around and we do circular convolution
@@ -86,8 +88,9 @@ projections_lesion = imgaussfilt(projections_lesion, sigma, 'Padding', 'circular
 projections_inserted = projections_img + projections_lesion;
 
 %% FBP reconstruction
-reconstructed_img = recon.fbp(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, projections_lesion);
+reconstructed_img = recon.fbp(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, projections_img);
 
-
+%% Visualization
+viz.double(double(reconstructed_img))
 %%
-viz.double(reconstructed_img)
+viz.sinogram(projections_img)

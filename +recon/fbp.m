@@ -6,20 +6,20 @@ function [recon] = fbp(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, pr
     yc = ((1:ny) - ny/2 - 0.5) * dy;
     [X, Y] = ndgrid(xc, yc); % Create a 2D grid for the whole image
 
-    % because we are doing fan beam (with one source) reconstruction, weight the different detector pixels
+    % because we are doing fan beam (with one source) reconstruction, weigh the different detector pixels
     u_idx = (1:nu) - (nu/2 + 0.5); 
     u_dist = u_idx * du;
     pre_weight = sdd ./ sqrt(sdd^2 + u_dist.^2)'; 
     weighted_prj = projections .* pre_weight; 
 
     % ramp filtering in the frequency domain
-    N_pad = 2^nextpow2(nu * 2); 
-    f = [0:(N_pad/2-1), -(N_pad/2):-1] / N_pad; % Frequency axis
-    H = abs(f)'; % Ram-Lak (Ramp) Filter
+    f = (-nu/2:nu/2-1)'/(nu*du);
+    H = abs(2*pi*f);
 
     % Apply FFT, multiply by Ramp filter, apply IFFT, and remove padding
-    filtered_prj_pad = real(ifft(fft(weighted_prj, N_pad, 1) .* H, [], 1));
-    filtered_prj = filtered_prj_pad(1:nu, :);
+    fft_prj = fftshift(fft(weighted_prj, [], 1));
+    filtered_fft_prj = fft_prj .* H;
+    filtered_prj = real(ifft(ifftshift(filtered_fft_prj), [], 1));
 
     % now we do fbp but weighted by distance / angle
     recon = zeros(nx, ny, 'double');
@@ -60,3 +60,18 @@ function [recon] = fbp(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, pr
     recon = recon * (sid^2 / sdd);
 
 end
+
+%filtered_prj_pad = real(ifft(fft(weighted_prj, N_pad, 1) .* H, [], 1));
+%filtered_prj = filtered_prj_pad(1:nu, :);
+
+%%
+% ramp filtering in the frequency domain
+%N_pad = 2^nextpow2(nu * 2); 
+%f = [0:(N_pad/2-1), -(N_pad/2):-1] / N_pad; % Frequency axis
+%H = abs(f)'; % Ram-Lak (Ramp) Filter
+
+% Apply FFT, multiply by Ramp filter, apply IFFT, and remove padding
+%fft_prj = fftshift(fft(weighted_prj, N_pad, 1));
+%filtered_fft_prj = fft_prj .* H;
+%filtered_prj = real(ifft(ifftshift(filtered_fft_prj), [], 1));
+%filtered_prj = filtered_prj(1:nu, :);
