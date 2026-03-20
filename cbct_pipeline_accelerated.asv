@@ -1,0 +1,68 @@
+%% data importation and declaring necessary varibles
+clear;
+reset(gpuDevice(1))             % clear lingering threads and kill extra processes
+indir = 'C:\Users\Nathan Cao\OneDrive\Desktop\ct images analysis\cbct_head_phantom\DCT_HEAD_CLEAR_NAT_FILL_FULL_HU_NORMAL_[AX3D]_0009\';
+out_filename = '.\projections.raw';
+files = dir([indir '*.IMA']);
+header = dicominfo([indir files(1).name]); % getting the dicom scan information
+nx = single(header.Rows);       % 3D image matrix size along x
+ny = single(header.Columns);    % 3D image matrix size along y
+nz = length(files);             %y 3D image matrix size along z
+dx = header.PixelSpacing(1);    % 3D image pixel size. unit: mm
+disp(dx)
+dy = header.PixelSpacing(2);    % 3D image pixel size. unit: mm
+dz = header.SliceThickness;     % 3D image pixel size. unit: mm
+sid = 750;                      % Source-to-ISO Distance. unit: mm
+sdd = 1200;                     % Source-to-Detector Distance. unit: mm
+du = 0.154*4;                   % 2D detector pixel size. unit: mm 
+dv = 0.154*4;                   % 2D detector pixel size. unit: mm
+nu = 2480/4;                    % number of detector pixels along u (native: 1920 × 2480)
+nv = 1920/4;                    % number of detector pixels along v (native: 1920 × 2480)
+mu_water = 0.02;                % unit: 1/mm
+
+% simulated lesion parameters (spherical)
+lesion_radius = 10;     % (mm)
+lesion_mu = 0.03;       % higher than soft tissue which is typically 0.02
+
+% we want 20 views, so we get 20 angles from 0 to 360
+n_view = 360; 
+theta_array = linspace(0, 2*pi, n_view);
+
+% define the volume that we store the CT image in 
+vol = zeros(nx, ny, nz, 'double');
+for z = 1:nz
+    image = dicomread([indir files(z).name]);
+    vol(:,:,z) = double(image);
+end
+vol = vol + header.RescaleIntercept;
+vol = (vol + 1000) / 1000 * mu_water;        % this step is to convert the HU to mu. 
+
+%% Lesion creation
+mask = lesion.sphere(nx, ny, nz, dx, dy, dz, lesion_radius);
+
+%% CUDA Siddon
+projections_vol = siddon.siddoncu(nx, ny, nz, dx, dy, dz, sid, sdd, du, dv, nu, nv, n_view, theta_array, vol);
+
+%% C++ Siddon
+projections_vol = siddon.siddoncpp_three(nx, ny, nz, dx, dy, dz, sid, sdd, du, dv, nu, nv, n_view, theta_array, vol);
+
+%% Projections with lesion
+projections = projections_vol + projections_les;
+
+%% fdk reconstruction with CUDA kernel
+
+recon = recon.fdk(nx, ny, nz, dx, dy, dz, sid, sdd, du, dv, nu, nv, n_view, theta_array, projections_vol);
+
+%% Scroll through visualization for reconstructed volume
+recon = squeeze(recon);
+
+figure;
+sliceViewer(recon);
+colormap gray;
+
+%% 3D visualization for reconstructed volume
+figure;
+volshow(recon);
+%%
+one = squeeze(projections_vol(:, :, 1));
+imshow(one)

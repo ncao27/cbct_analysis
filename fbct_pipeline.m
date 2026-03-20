@@ -14,7 +14,7 @@ sid = 750;                      % Source-to-ISO Distance. unit: mm
 sdd = 1200;                     % Source-to-Detector Distance. unit: mm
 du = 0.154*4;                   % 2D detector pixel size. unit: mm 
 dv = dz;                        % 2D detector pixel size. unit: mm
-nu = 2480/4;                    % number of detector pixels along u (native: 1920 × 2480) 
+nu = 4000/4;                    % number of detector pixels along u (native: 1920 × 2480) 
 nv = 1;                         % number of detector pixels along v
 mu_water = 0.02;                % unit: 1/mm
 
@@ -24,20 +24,22 @@ theta_array = linspace(0, 2*pi, n_view);
 
 % store the with lesion image
 fid = fopen([indir imgs(1).name],'r','ieee-be');                % get fid of data (raw), 'ieee-be' reads big-endian style data
-img_with_lesion = fread(fid, [nx ny],'single');                 % read data, 32-bit representation, so single precision
+img_with_lesion = fread(fid, [nx ny],'float32');                 % read data, 32-bit representation, so single precision
 fclose(fid);                                                    % close file
 img_with_lesion = img_with_lesion';                             % transpose
 %img_with_lesion = (img_with_lesion + 1000) / 1000 * mu_water;   % no need for conversion, it's already good 
 
 % store the without lesion image
 fid = fopen([indir imgs(2).name],'r','ieee-be');                    % get fid of data (raw), 'ieee-be' reads big-endian style data
-img_without_lesion = fread(fid, [nx ny],'single');                  % read data, 32-bit representation, so single precision
+img_without_lesion = fread(fid, [nx ny],'float32');                  % read data, 32-bit representation, so single precision
 fclose(fid);                                                        % close file
 img_without_lesion = img_without_lesion';                           % transpose
 %img_without_lesion = (img_without_lesion + 1000) / 1000 * mu_water; % no need for conversion, it's already good 
 
 % store the segmented lesion image
 lesion = imread([indir lesion(1).name]);
+
+P = phantom('Modified Shepp-Logan',512);
 
 %% Image Without Lesion: Forward Projection
 projections_img = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, img_without_lesion));
@@ -88,6 +90,7 @@ projections_inserted = projections_img + projections_lesion;
 %% FBP reconstruction
 reconstructed_img = recon.fbp(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, projections_inserted);
 
-
+%% Visualization
+viz.double(double(reconstructed_img))
 %%
-viz.double(reconstructed_img)
+viz.sinogram(projections_img)

@@ -4,6 +4,7 @@ function [] = double(img)
     % value of the soft tissue in the original image.
     imagesc(img, [0, max(img(:)) * 0.6]);
     colormap gray;
+    %caxis([0.015 0.04]) this is for better visualization with orig imgs
     colorbar;
-    title('');
+    title('Reconstructed Image (With Lesion Inserted)');
 end
