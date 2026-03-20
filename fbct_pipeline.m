@@ -14,7 +14,7 @@ sid = 750;                      % Source-to-ISO Distance. unit: mm
 sdd = 1200;                     % Source-to-Detector Distance. unit: mm
 du = 0.154*4;                   % 2D detector pixel size. unit: mm 
 dv = dz;                        % 2D detector pixel size. unit: mm
-nu = 2480/4;                    % number of detector pixels along u (native: 1920 × 2480) 
+nu = 4000/4;                    % number of detector pixels along u (native: 1920 × 2480) 
 nv = 1;                         % number of detector pixels along v
 mu_water = 0.02;                % unit: 1/mm
 
@@ -24,24 +24,73 @@ theta_array = linspace(0, 2*pi, n_view);
 
 % store the with lesion image
 fid = fopen([indir imgs(1).name],'r','ieee-be');                % get fid of data (raw), 'ieee-be' reads big-endian style data
-img_with_lesion = fread(fid, [nx ny],'single');                 % read data, 32-bit representation, so single precision
+img_with_lesion = fread(fid, [nx ny],'float32');                 % read data, 32-bit representation, so single precision
 fclose(fid);                                                    % close file
 img_with_lesion = img_with_lesion';                             % transpose
 %img_with_lesion = (img_with_lesion + 1000) / 1000 * mu_water;   % no need for conversion, it's already good 
 
 % store the without lesion image
 fid = fopen([indir imgs(2).name],'r','ieee-be');                    % get fid of data (raw), 'ieee-be' reads big-endian style data
-img_without_lesion = fread(fid, [nx ny],'single');                  % read data, 32-bit representation, so single precision
+img_without_lesion = fread(fid, [nx ny],'float32');                  % read data, 32-bit representation, so single precision
 fclose(fid);                                                        % close file
 img_without_lesion = img_without_lesion';                           % transpose
 %img_without_lesion = (img_without_lesion + 1000) / 1000 * mu_water; % no need for conversion, it's already good 
 
 % store the segmented lesion image
 lesion = imread([indir lesion(1).name]);
-lesion = (lesion + 1000) / 1000 * mu_water;
 
-%% Forward Projection 
-projections = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, img_without_lesion));
+P = phantom('Modified Shepp-Logan',512);
+
+%% Image Without Lesion: Forward Projection
+projections_img = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, img_without_lesion));
+
+%% Segmented Lesion: Forward Projection
+% make lesion grayscale instead of rgb
+if size(lesion, 3) == 3
+    lesion = rgb2gray(lesion);
+end
+
+% make lesion into double
+lesion = double(lesion);
+
+% invert the lesion, normalize lesion, make intensity 100% more than soft tissue
+lesion = (max(lesion, [], "all") - lesion) / max(lesion, [], "all") * mu_water;
+
+% scale it down to it's actual width
+target_width = 20; 
+scale_factor = target_width / size(lesion, 2);
+lesion = imresize(lesion, scale_factor);
+
+% Get the new, tiny dimensions
+[h_small, w_small] = size(lesion);
+
+% blank 512 by 512 canvas for the new lesion
+lesion_512 = zeros(512, 512, 'double');
+
+% define the position where we insert the lesion
+x_pos = 300; 
+y_pos = 350;
+
+% insert lesion onto canvas
+lesion_512(y_pos : y_pos+h_small-1, x_pos : x_pos+w_small-1) = lesion;
+
+% forward project the lesion
+projections_lesion = squeeze(siddon.siddoncpp_two(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, lesion_512));
+
+%% Filter / Blur the Projection Lesions
+sigma = [1.5, 0.0001];
+
+% sigma: std dev, controls how soft the edges are
+% padding, circular: ensures the convolution wraps around and we do circular convolution
+projections_lesion = imgaussfilt(projections_lesion, sigma, 'Padding', 'circular');
+
+%% Add 2D image and Lesion Projections Together
+projections_inserted = projections_img + projections_lesion;
 
 %% FBP reconstruction
+reconstructed_img = recon.fbp(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, projections_inserted);
 
+%% Visualization
+viz.double(double(reconstructed_img))
+%%
+viz.sinogram(projections_img)
