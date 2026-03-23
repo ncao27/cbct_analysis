@@ -93,4 +93,4 @@ reconstructed_img = recon.fbp(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_ar
 %% Visualization
 viz.double(double(reconstructed_img))
 %%
-viz.sinogram(projections_img)
+viz.double(img_without_lesion)

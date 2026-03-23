@@ -6,5 +6,6 @@ function [] = double(img)
     colormap gray;
     %caxis([0.015 0.04]) this is for better visualization with orig imgs
     colorbar;
+    axis image; % makes it so that the pixels in the graph are square
     title('Reconstructed Image (With Lesion Inserted)');
 end
