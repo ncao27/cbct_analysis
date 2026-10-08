@@ -88,7 +88,7 @@ projections_lesion = imgaussfilt(projections_lesion, sigma, 'Padding', 'circular
 projections_inserted = projections_img + projections_lesion;
 
 %% FBP reconstruction
-reconstructed_img = recon.fbp(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, projections_inserted);
+reconstructed_img = recon.fbp(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, projections_img);
 
 %% Visualization
 viz.double(double(reconstructed_img))

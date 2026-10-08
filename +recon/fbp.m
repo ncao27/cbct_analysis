@@ -19,7 +19,7 @@ function [recon] = fbp(nx, ny, dx, dy, sid, sdd, du, nu, n_view, theta_array, pr
     % Apply FFT, multiply by Ramp filter, apply IFFT, and remove padding
     fft_prj = fftshift(fft(weighted_prj, [], 1));
     filtered_fft_prj = fft_prj .* H;
-    filtered_prj = real(ifft(ifftshift(filtered_fft_prj), [], 1));
+    filtered_prj = real(ifft(ifftshift(filtered_fft_prj), [], 1)) * du;
 
     % now we do fbp but weighted by distance / angle
     recon = zeros(nx, ny, 'double');
