@@ -11,3 +11,9 @@
 /li_fbp/img.raw
 360_projections_original.mat
 360_projections_lesion_sim.mat
+
+# Python environments, bytecode, and generated projection/reconstruction files
+.venv/
+__pycache__/
+*.py[cod]
+/python_fbp/results/
