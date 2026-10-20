@@ -1,8 +1,13 @@
-C:\Users\Nathan Cao\OneDrive\Desktop\ct images analysis\cbct_head_phantom\head_phantom_cbct_analysis\360_projections_original.mat
+# macOS metadata and MATLAB editor backups
+.DS_Store
+*.asv
+
+# Generated MEX builds; retain the original Windows binaries explicitly.
+*.mex*
+!/kernels/prebuilt/windows-x64/*.mexw64
+
+# Generated projection and reconstruction outputs (reference input stays tracked).
+/li_fbp/projections.raw
+/li_fbp/img.raw
 360_projections_original.mat
-
-C:\Users\Nathan Cao\OneDrive\Desktop\ct images analysis\cbct_head_phantom\head_phantom_cbct_analysis\360_projections_lesion_sim.mat
 360_projections_lesion_sim.mat
-
-C:\Users\Nathan Cao\OneDrive\Desktop\ct images analysis\cbct_head_phantom\head_phantom_cbct_analysis\siddon_kernel.mexw64
-siddon_kernel.mexw64
