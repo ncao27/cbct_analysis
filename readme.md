@@ -10,14 +10,75 @@ CT is one of the most widely used diagnostic and intervention imaging tools. Fro
 
 ---
 
-## 📊 Forward and Back Projection
-Like I said previously, this project is honestly the culmination of my educational journey with CT, so several scripts are iterations of one another
-- cbct_head_phantom_analysis1: my first iteration of attempting forward projection. The code works just fine but is quite slow
-- cbct_head_phantom_analysis: my second iteration of attempting forward projection. The code is heavily inspired by Dr. Li's own reconstruction methods. This contains the classic Siddon forward projection, classic FDK reconstruction, C++ accelerated Siddon (code is in siddon_kernel.cpp), and CUDA accelerated FDK reconstruction (currently still under development)
+## Reference workflow
 
----
+`li_fbp/` contains the forward projection and filtered backprojection code used
+for the conference abstract. It is the golden reference for this photon-counting
+CT project. Both detector geometries are retained unchanged:
 
-## ⚙️ Acceleration
-- siddon_kernel.cpp: this cpp kernel accelerates the classic Siddon forward projection which takes around give or take a few hours on my device to just 10 minutes. For those wondering why, cpp runs closer to the CPU than MATLAB so the execution time is shortened by a lot.
-- fdk_kernel.cu: this is a CUDA kernel meant to accelerate FDK reconstruction. The projected reconstruction time should be around 5-10 seconds.  
+| Detector | Forward projection | Reconstruction |
+| --- | --- | --- |
+| Curved | `c1_forward_projection_v6_curved_detector.m` | `c2_fbp_v6_curved_detector.m` |
+| Linear | `c1_forward_projection_v6_linear_detector.m` | `c2_fbp_v6_linear_detector.m` |
 
+On the Windows MATLAB setup, make `li_fbp` the current folder and run the forward
+projector followed by the reconstruction for the **same detector geometry**.
+Keep the same MATLAB workspace between the scripts: the curved reconstruction
+uses `sdd` defined by its forward projector. These scripts use GPU arrays and
+require MATLAB with Parallel Computing Toolbox and a supported GPU.
+The forward projectors retain their original Windows-style input/output paths.
+
+The included `without_lesion.raw` is read as a big-endian 512 × 512 single-precision
+image. Each forward projector writes `projections.raw`; each reconstruction reads
+that file and writes `img.raw`. Both detector pairs share those output names, so
+copy results to a separate experiment folder before running the other geometry.
+Save exported figures under a subdirectory of `images/`.
+
+All geometry, sampling, attenuation, and DICOM-derived parameters are preserved.
+The reference scripts are standalone; they do not call the experimental native
+kernels or the MATLAB helpers below.
+
+## Repository layout
+
+| Path | Contents |
+| --- | --- |
+| `li_fbp/` | Unmodified conference reference scripts and input image |
+| `kernels/cpp/` | Original 2D and 3D C++ Siddon kernel sources |
+| `kernels/cuda/` | Original CUDA Siddon and FDK kernel sources |
+| `kernels/prebuilt/windows-x64/` | Preserved Windows MEX binaries |
+| `+lesion/` | Reusable spherical lesion mask helper |
+| `+viz/` | Reusable image and sinogram display helpers |
+| `ct_volume/` | Original MATLAB phantom datasets |
+| `images/` | Existing research figures and subdirectories for new figures |
+| `reconstruction videos/` | Existing reconstruction recordings |
+| `helpful_documents/` | Existing MEX/CUDA setup notes and screenshots |
+
+Add the repository root to the MATLAB path to call `lesion.sphere`, `viz.double`,
+and `viz.sinogram`. These helpers are retained for future lesion insertion work;
+they are not an integrated lesion insertion pipeline in the reference workflow.
+
+## Native kernels
+
+The C++ and CUDA experiments are preserved byte-for-byte, separately from the
+conference reference. The old MATLAB pipelines and wrappers have been removed.
+The `.mexw64` files are preserved Windows binaries, not macOS builds; their build
+settings and correspondence to the source variants have not been revalidated.
+The C++ and CUDA Siddon sources share the `siddon_kernel` name, so keep their
+compiled outputs in separate directories when revisiting these experiments.
+
+## Cleanup and recovery
+
+Superseded MATLAB pipelines, unused wrappers, editor autosaves, and the empty
+`untitled.m` were removed in individual commits. Research data, figures, videos,
+and supporting documents were retained. See [the cleanup record](docs/cleanup.md)
+for the file inventory and verification results.
+
+The complete pre-cleanup repository is available at commit
+`17ed43cfae77771205945e97ec47ac6d57acb50a`. To inspect a removed file without
+changing the working tree, use:
+
+```sh
+git show '17ed43cfae77771205945e97ec47ac6d57acb50a:fbct_pipeline.m'
+```
+
+Use the same command with any original path listed in the cleanup record.
