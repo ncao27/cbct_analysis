@@ -38,11 +38,20 @@ All geometry, sampling, attenuation, and DICOM-derived parameters are preserved.
 The reference scripts are standalone; they do not call the experimental native
 kernels or the MATLAB helpers below.
 
+## Python implementation
+
+`python_fbp/` provides the linear and curved reference workflows in Python, with
+shared projection/reconstruction code, a CPU backend, and an optional CUDA
+backend. The MATLAB code under `li_fbp/` remains unchanged. See the
+[Python README](python_fbp/README.md) for installation, commands, file formats,
+and numerical comparisons against MATLAB CPU fixtures.
+
 ## Repository layout
 
 | Path | Contents |
 | --- | --- |
 | `li_fbp/` | Unmodified conference reference scripts and input image |
+| `python_fbp/` | Python reference port, command-line workflow, and regression fixtures |
 | `kernels/cpp/` | Original 2D and 3D C++ Siddon kernel sources |
 | `kernels/cuda/` | Original CUDA Siddon and FDK kernel sources |
 | `kernels/prebuilt/windows-x64/` | Preserved Windows MEX binaries |
