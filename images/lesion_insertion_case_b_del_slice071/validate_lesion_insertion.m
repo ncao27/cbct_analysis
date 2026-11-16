@@ -127,13 +127,12 @@ switch stage
         sgtitle('Same healthy image, same DEL lesion, same mask and location | shared display window 7000-9000');
         exportgraphics(f,fullfile(out,'01_insertion_comparison.png'),'Resolution',140); close(f);
     case 'difference'
-        f=figure('Visible','off','Color','white','Position',[50 50 1450 550]);
-        tiledlayout(1,3,'Padding','compact','TileSpacing','compact');
+        f=figure('Visible','off','Color','white','Position',[50 50 1450 650]);
+        tiledlayout(1,3,'Padding','loose','TileSpacing','loose');
         showDifference(s.direct_difference,200,'Projection - direct image insertion',false);
         showDifference(s.direct_difference,200,'Same subtraction: lesion zoom',true);
         lim=max(abs(s.matched_difference(:))); lim=max(lim,eps);
         showDifference(s.matched_difference,lim,'Projection - reconstructed image insertion',false);
-        sgtitle('Signed subtraction | stored pixel units | first two panels saturate at +/-200; third shows full range');
         exportgraphics(f,fullfile(out,'02_method_differences.png'),'Resolution',140); close(f);
     case 'arrays'
         target=fullfile(out,'03_insertion_arrays.mat'); copyfile(result,target);
@@ -213,5 +212,5 @@ end
 function showDifference(a,lim,label,zoomed)
 ax=nexttile; imagesc(ax,a',[-lim lim]); axis(ax,'image'); colormap(ax,gray(256)); colorbar(ax);
 if zoomed, xlim(ax,[145.5 204.5]); ylim(ax,[230.5 288.5]); else, axis(ax,'off'); end
-title(ax,label);
+title(ax,{label,sprintf('Stored pixel units | display +/-%.4g | gray = zero',lim)});
 end
