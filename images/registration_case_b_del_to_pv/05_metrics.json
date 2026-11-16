@@ -1,0 +1,124 @@
+{
+  "metadata": {
+    "fixed_phase": "portal venous",
+    "moving_phase": "delayed",
+    "fixed_source": "/Users/ncao/Desktop/cbct_analysis/lesion_insertion_project/cases without lesion/case b/ABD PEL AX 3 PV_40cm_512x512x171.raw",
+    "moving_source": "/Users/ncao/Desktop/cbct_analysis/lesion_insertion_project/cases without lesion/case b/ABD PEL AX 3 DEL_40cm_512x512x142.raw",
+    "fixed_slice": 91,
+    "moving_slice": 71,
+    "encoding": "Inferred big-endian uint16, consistent with two bytes per voxel. Reported float32 metadata conflicts with file length.",
+    "units": "Stored pixel units, not confirmed HU; displacement in tested-grid pixels/voxels",
+    "orientation": "Raw MATLAB matrices transposed for display before registration",
+    "inplane_fov_mm": 400,
+    "native_inplane_spacing_mm": 0.78125,
+    "reported_slice_thickness_mm": 3,
+    "spatial_limit": "No DICOM origins/orientations or confirmed inter-slice spacing. Content-matched 2D pair and local 3D slab only; not whole-volume physical registration.",
+    "phase_limit": "Both inputs are post-contrast. No pre-injection image is available.",
+    "function": "demons_iodine_registration.m, unchanged, default settings",
+    "settings": {
+      "FieldSmoothing": 1.5,
+      "Iterations": [
+        100,
+        50,
+        25
+      ],
+      "NoiseFloor": 0.03,
+      "NormalizationSigma": 5,
+      "RegistrationMode": "local-normalized"
+    },
+    "matlab_version": "23.2.0.3097123 (R2023b) Update 11",
+    "slice_selection": "Maximum bone-focused cross-correlation against DEL 71, scanning all 171 PV slices with up to +/-28 native pixels of translation",
+    "feature_thresholds": "Slice match: clip stored values minus 8450 to [0,1000]. Body proxy >7700, bright-structure proxy >8650. Edges use clipped [7400,8800], Gaussian sigma 1, Canny [0.05,0.15]. These are analysis settings, not HU or scanner parameter changes.",
+    "edge_limit": "Propagated-edge distance measures geometric agreement of source edges. Redetecting edges after interpolation gives a worse result and is also reported. Neither is ground-truth landmark error.",
+    "feature_trial": "Same function, clipped [7400,8800] feature copies and FieldSmoothing=2; retained as diagnostic, not selected as main result"
+  },
+  "metrics": {
+    "phase_2d": {
+      "evaluation_pixels": 84215,
+      "phase_rmse_before": 171.35869104730875,
+      "phase_rmse_after": 147.05883441475623,
+      "phase_mae_before": 65.840871578697389,
+      "phase_mae_after": 49.42972187883521,
+      "feature_rmse_before": 0.031046380233225292,
+      "feature_rmse_after": 0.020627937565371086,
+      "body_dice_before": 0.99098432348785581,
+      "body_dice_after": 0.998571141523967,
+      "bright_structure_dice_before": 0.8094013955196474,
+      "bright_structure_dice_after": 0.84969495285635055,
+      "min_jacobian": 0.33511160964442743,
+      "fold_fraction": 0,
+      "valid_fraction": 0.99416351318359375,
+      "max_displacement_pixels": 8.4926252123584138,
+      "body_median_displacement_pixels": 1.0370221256546155,
+      "body_p95_displacement_pixels": 4.17582303315057,
+      "edge_distance_before_pixels": 1.72157741,
+      "propagated_edge_distance_after_pixels": 1.40633583,
+      "redetected_edge_distance_after_pixels": 1.93809485,
+      "seconds": 0.48431120833333335
+    },
+    "feature_trial": {
+      "evaluation_pixels": 84215,
+      "phase_rmse_before": 171.35869104730875,
+      "phase_rmse_after": 153.97816937083599,
+      "phase_mae_before": 65.840871578697389,
+      "phase_mae_after": 52.044326509671635,
+      "feature_rmse_before": 0.054911090736330749,
+      "feature_rmse_after": 0.039761355715563815,
+      "body_dice_before": 0.99098432348785581,
+      "body_dice_after": 0.99866044517871888,
+      "bright_structure_dice_before": 0.8094013955196474,
+      "bright_structure_dice_after": 0.84047838086476534,
+      "min_jacobian": 0.59458203785420993,
+      "fold_fraction": 0,
+      "valid_fraction": 0.9957275390625,
+      "max_displacement_pixels": 5.7518936740770874,
+      "body_median_displacement_pixels": 0.9570966414728852,
+      "body_p95_displacement_pixels": 3.8555762329370817,
+      "propagated_edge_distance_after_pixels": 1.48432016,
+      "redetected_edge_distance_after_pixels": 1.64426053
+    },
+    "known_translation": {
+      "expected_backward_dx": 4,
+      "expected_backward_dy": -3,
+      "median_endpoint_error_pixels": 0.033470985976066119,
+      "p95_endpoint_error_pixels": 0.11370323544710054,
+      "rmse_before": 206.61828359038057,
+      "rmse_after": 1.4109580799345414,
+      "min_jacobian": 0.060231917252827845,
+      "fold_fraction": 0
+    },
+    "slab_3d": {
+      "fixed_slices": [
+        83,
+        99
+      ],
+      "moving_slices": [
+        63,
+        79
+      ],
+      "grid": [
+        256,
+        256,
+        17
+      ],
+      "seconds": 1.4847397083333334,
+      "evaluation_voxels": 302194,
+      "feature_rmse_before": 0.032007835542826393,
+      "feature_rmse_after": 0.023351730112201617,
+      "phase_rmse_before": 120.94813800831429,
+      "phase_rmse_after": 85.082625456594869,
+      "min_jacobian": 0.32378138367149845,
+      "fold_fraction": 0,
+      "valid_fraction": 0.92240546731387862
+    },
+    "checks": {
+      "identity_exact": true,
+      "output_is_original_intensity_warp": true,
+      "outside_support_is_nan": true,
+      "structural_overlap_improved": true,
+      "no_detected_folds_2d_or_3d": true,
+      "known_translation_median_error_below_one_pixel": true,
+      "redetected_edge_metric_improved": false
+    }
+  }
+}
