@@ -1,0 +1,184 @@
+{
+  "metadata": {
+    "case": "Case B DEL slice 71",
+    "lesion": "Case A S13_I137_DEL_19x18.raw",
+    "units": "Stored pixel units; inferred raw encoding; not confirmed HU or attenuation",
+    "method": "p=8192*(healthy~=0); corrected healthy=R_corrected(A(healthy)-A(p))+p",
+    "insertion": "R_corrected(A(healthy)-A(p)+A(lesion_delta))+p",
+    "matched_control": "R_corrected(A(image_domain)-A(p))+p",
+    "corrections": "Normalized detector interpolation; zero invalid detector contributions; known-support baseline restoration",
+    "limitation": "Uses original image support and an assumed baseline. This is not an independent or physically calibrated reconstruction.",
+    "smoothing": "None; no median, Gaussian, or other image denoising",
+    "execution": "CPU copies of reference scripts; geometry and ray sampling unchanged; GPU not tested",
+    "interior_roi": "Original mask: nonzero pixels more than 5 pixels from image border and zero padding; includes background",
+    "error_sign": "Reconstruction minus target; matched error is projection insertion minus reconstructed image insertion",
+    "display_offset": 8192,
+    "display_window": [
+      -200,
+      300
+    ],
+    "geometry": {
+      "fov_mm": 400,
+      "image_size": [
+        512,
+        512
+      ],
+      "source_to_isocenter_mm": 750,
+      "source_to_detector_mm": 1200,
+      "detector_elements": 2480,
+      "detector_pitch_mm": 0.35,
+      "views": 2000,
+      "pixel_spacing_mm": 0.78125,
+      "slice_thickness_mm": 3,
+      "detector": "curved"
+    },
+    "matlab_version": "23.2.0.3097123 (R2023b) Update 11"
+  },
+  "metrics": {
+    "original_healthy": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 78.5982725180993,
+        "rmse": 289.52895449454047,
+        "bias": -19.377007102505559,
+        "max_absolute": 5220.72705078125
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 53.437753303534194,
+        "rmse": 67.29781369176365,
+        "bias": -0.36976846194847829,
+        "max_absolute": 325.77783203125
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 52.379515609120936,
+        "rmse": 65.678519437014174,
+        "bias": -5.7264334825965451,
+        "max_absolute": 175.35986328125
+      }
+    },
+    "corrected_healthy": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 8.9124872870202658,
+        "rmse": 36.397966603139736,
+        "bias": 1.3053843176359088,
+        "max_absolute": 489.6180419921875
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 5.0216994338636853,
+        "rmse": 6.309885540808069,
+        "bias": 0.032611619814583749,
+        "max_absolute": 29.9796142578125
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 5.2518335403950234,
+        "rmse": 6.679349095567428,
+        "bias": 0.12335748473803203,
+        "max_absolute": 19.135448455810547
+      }
+    },
+    "original_insertion": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 78.598224310213936,
+        "rmse": 289.52890676052579,
+        "bias": -19.377941531568922,
+        "max_absolute": 5221.080078125
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 53.437697461691293,
+        "rmse": 67.297616281766835,
+        "bias": -0.37085564012634609,
+        "max_absolute": 325.4384765625
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 51.827990027947152,
+        "rmse": 65.082317150441185,
+        "bias": -5.6099228277439028,
+        "max_absolute": 176.7470703125
+      }
+    },
+    "corrected_insertion": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 8.9134756003769269,
+        "rmse": 36.3982417620992,
+        "bias": 1.3053669225925262,
+        "max_absolute": 489.72369384765625
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 5.0226803779087019,
+        "rmse": 6.3115407197751408,
+        "bias": 0.032563699835298492,
+        "max_absolute": 29.99053955078125
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 5.5487518998665539,
+        "rmse": 7.083986246211051,
+        "bias": 0.25051699324351984,
+        "max_absolute": 22.692623138427734
+      }
+    },
+    "matched_methods": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 0.0011871057854762057,
+        "rmse": 0.001553605137656867,
+        "bias": -1.6310095503513367E-5,
+        "max_absolute": 0.0174560546875
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 0.0011953539700344381,
+        "rmse": 0.0015674864687386548,
+        "bias": -1.6201476821648086E-5,
+        "max_absolute": 0.0174560546875
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 0.0051511371038793548,
+        "rmse": 0.0063024388412281519,
+        "bias": -0.00060520811778743094,
+        "max_absolute": 0.017255783081054688
+      }
+    },
+    "incremental_lesion": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 0.066791299510615687,
+        "rmse": 0.17491545429513938,
+        "bias": -1.7395043382606445E-5,
+        "max_absolute": 15.968044281005859
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 0.05668574217166545,
+        "rmse": 0.1615063561227052,
+        "bias": -4.7919979285256341E-5,
+        "max_absolute": 15.968044281005859
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 1.6648331325713213,
+        "rmse": 2.7261861512779531,
+        "bias": 0.12715950850548782,
+        "max_absolute": 15.968044281005859
+      }
+    },
+    "reconstruction_additivity": {
+      "pixel_count": 262144,
+      "mae": 0.00049889705792561124,
+      "rmse": 0.00068078904311256766,
+      "bias": -5.5353195718135448E-6,
+      "max_absolute": 0.0050929933786392212
+    }
+  }
+}
