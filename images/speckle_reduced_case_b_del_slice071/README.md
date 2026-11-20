@@ -1,5 +1,7 @@
 # Regenerated reconstruction and lesion-insertion images
 
+> **Historical diagnostic only — withdrawn from direct projection/FBP validation.** These previews use the source-support/8192 baseline described below. Their reduced errors, including the 6.3099 interior RMSE, do not measure an ordinary forward-projection/FBP round trip. Use the [direct reconstruction validation and bandwidth comparison](../direct_reference_case_b_del_slice071/README.md) for current results without baseline subtraction or restoration. The original files and the historical method description below are retained for traceability.
+
 The excess speckle is substantially reduced using normalized detector interpolation and explicit correction for an assumed stored-value baseline. No image smoothing was applied. These are corrected experimental previews, not calibrated HU/attenuation reconstructions. The correction uses the original image's known support; its accuracy is not an independent assessment from projections alone.
 
 - [Healthy reconstruction: original, regenerated, and subtraction](01_reconstruction.png)
