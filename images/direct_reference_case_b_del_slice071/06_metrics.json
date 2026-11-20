@@ -1,0 +1,452 @@
+{
+  "metadata": {
+    "geometry": {
+      "fov_mm": 400,
+      "image_size": [
+        512,
+        512
+      ],
+      "source_to_isocenter_mm": 750,
+      "source_to_detector_mm": 1200,
+      "detector_elements": 2480,
+      "detector_pitch_mm": 0.35,
+      "views": 2000,
+      "pixel_spacing_mm": 0.78125,
+      "slice_thickness_mm": 3,
+      "detector": "curved"
+    },
+    "case": "Case B DEL slice 71",
+    "lesion": "Case A S13_I137_DEL_19x18.raw",
+    "units": "Stored pixel units; raw decoding inferred; physical attenuation and HU calibration unavailable",
+    "forward_model": "Cubic convolution of the unchanged samples with zero samples outside the rectangular array; midpoint ray integration on its bounded support",
+    "boundary": "Four zero samples added outside each array edge; original coordinates and values unchanged; this is an explicit boundary-model change from hard extrapolation at the last pixel center",
+    "backprojector": "Professor equiangular fan FBP; normalized detector interpolation; complete filtered-convolution domain; double precision",
+    "reference_max_step_mm": 0.24038461538461539,
+    "selected_max_step_mm": 0.1201923076923077,
+    "filter": "Band-limited ramp with angular cutoff SID/(2*dx); same fan-beam sin(gamma) kernel correction",
+    "angular_cutoff_cycles_per_radian": 480,
+    "isocenter_cutoff_cycles_per_mm": 0.64,
+    "filter_limit": "Cutoff defined at isocenter; fan-beam spatial response varies with position. Resolution and ringing differ from the original detector-Nyquist ramp.",
+    "not_applied": "No baseline subtraction/restoration, fitted gain or offset, source-derived error-map subtraction, or post-reconstruction denoising",
+    "display": "Uniform stored value minus 8192, limits [-200 300], display only and not confirmed HU",
+    "execution": "MATLAB CPU; GPU path and clinical accuracy not validated",
+    "matlab_version": "23.2.0.3097123 (R2023b) Update 11",
+    "filter_selection": "Both bandwidths retained. Grid-derived cutoff reduces background aliasing but can increase lesion-edge error; it is not an unqualified improvement in lesion fidelity.",
+    "filter_domain": "Zero extension of raw projections for linear convolution; filtered samples cover all reconstruction angles. Physical 2480 detector samples and their spacing are unchanged."
+  },
+  "metrics": {
+    "reference_healthy": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 78.5982725180993,
+        "rmse": 289.52895449454047,
+        "bias": -19.377007102505559,
+        "max_absolute": 5220.72705078125
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 53.437753303534194,
+        "rmse": 67.29781369176365,
+        "bias": -0.36976846194847829,
+        "max_absolute": 325.77783203125
+      },
+      "central150mm": {
+        "pixel_count": 115816,
+        "mae": 51.683688483712849,
+        "rmse": 64.938032681548492,
+        "bias": -0.020195246055704739,
+        "max_absolute": 325.77783203125
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 52.379515609120936,
+        "rmse": 65.678519437014174,
+        "bias": -5.7264334825965451,
+        "max_absolute": 175.35986328125
+      }
+    },
+    "interpolation_only": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 60.076566941414256,
+        "rmse": 257.21641964934372,
+        "bias": -17.519802413455977,
+        "max_absolute": 3973.2593144770681
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 36.9688354232067,
+        "rmse": 46.411031666944837,
+        "bias": -0.17026432072545072,
+        "max_absolute": 204.8653327055481
+      },
+      "central150mm": {
+        "pixel_count": 115816,
+        "mae": 35.786661348107316,
+        "rmse": 44.891288366212365,
+        "bias": 0.36996322521833308,
+        "max_absolute": 177.83636960421791
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 37.471990075012911,
+        "rmse": 47.649930296920452,
+        "bias": -4.3571285520861718,
+        "max_absolute": 145.46011214114515
+      }
+    },
+    "unwindowed_corrected": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 13.481640128954549,
+        "rmse": 21.975510018816692,
+        "bias": -0.994267245404034,
+        "max_absolute": 317.69859150842058
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 11.577222122336526,
+        "rmse": 15.282760557897666,
+        "bias": -0.14817547802860831,
+        "max_absolute": 86.9342498699989
+      },
+      "central150mm": {
+        "pixel_count": 115816,
+        "mae": 12.901121222217165,
+        "rmse": 17.191776275555483,
+        "bias": 0.0329218843330637,
+        "max_absolute": 86.9342498699989
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 16.148271315343763,
+        "rmse": 20.524441185222869,
+        "bias": 0.025556825432405773,
+        "max_absolute": 61.867258043366746
+      }
+    },
+    "grid_bandwidth_healthy": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 14.889610233148222,
+        "rmse": 64.856305443601784,
+        "bias": -1.9531531042952286,
+        "max_absolute": 1219.5993062466537
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 6.5939150932199766,
+        "rmse": 11.013592310331777,
+        "bias": -0.094106151344772265,
+        "max_absolute": 140.10857675950319
+      },
+      "central150mm": {
+        "pixel_count": 115816,
+        "mae": 3.3382443592447131,
+        "rmse": 4.5696269931995506,
+        "bias": 0.0047523907377643535,
+        "max_absolute": 36.376922435812048
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 3.99559153407767,
+        "rmse": 5.2058240120799182,
+        "bias": -0.065537758532025148,
+        "max_absolute": 16.37656155867171
+      }
+    },
+    "reference_insertion": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 78.598224310213936,
+        "rmse": 289.52890676052579,
+        "bias": -19.377941531568922,
+        "max_absolute": 5221.080078125
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 53.437697461691293,
+        "rmse": 67.297616281766835,
+        "bias": -0.37085564012634609,
+        "max_absolute": 325.4384765625
+      },
+      "central150mm": {
+        "pixel_count": 115816,
+        "mae": 51.682815647672008,
+        "rmse": 64.936884267191019,
+        "bias": -0.020667966018026437,
+        "max_absolute": 325.4384765625
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 51.827990027947152,
+        "rmse": 65.082317150441185,
+        "bias": -5.6099228277439028,
+        "max_absolute": 176.7470703125
+      }
+    },
+    "grid_bandwidth_insertion": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 14.898787883900788,
+        "rmse": 64.859567554532674,
+        "bias": -1.9531672389171115,
+        "max_absolute": 1219.5988755274032
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 6.6037379918609638,
+        "rmse": 11.034171845116775,
+        "bias": -0.094118178490833218,
+        "max_absolute": 140.11985839027511
+      },
+      "central150mm": {
+        "pixel_count": 115816,
+        "mae": 3.3590493682403393,
+        "rmse": 4.673376071002501,
+        "bias": 0.0046698386350415158,
+        "max_absolute": 107.10692033772466
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 8.3010383553499167,
+        "rmse": 15.333038573265616,
+        "bias": 0.77020614009410848,
+        "max_absolute": 89.806676054477066
+      }
+    },
+    "matched_methods": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 2.9955979933610948E-12,
+        "rmse": 3.9589917261342283E-12,
+        "bias": -3.6464482082161458E-14,
+        "max_absolute": 5.2750692702829838E-11
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 3.0513711595762296E-12,
+        "rmse": 4.0271128913724855E-12,
+        "bias": -3.5108705678506548E-14,
+        "max_absolute": 5.2750692702829838E-11
+      },
+      "central150mm": {
+        "pixel_count": 115816,
+        "mae": 3.523812940766034E-12,
+        "rmse": 4.66867958929164E-12,
+        "bias": -3.5071176159752517E-14,
+        "max_absolute": 5.2750692702829838E-11
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 1.190107091466283E-11,
+        "rmse": 1.4654954613823593E-11,
+        "bias": -2.3107080837726834E-12,
+        "max_absolute": 4.0017766878008842E-11
+      }
+    },
+    "incremental_lesion": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 0.03993607611913709,
+        "rmse": 0.6882132791453841,
+        "bias": -1.4134621882518541E-5,
+        "max_absolute": 98.845750423590289
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 0.041945011215920328,
+        "rmse": 0.71246000197938164,
+        "bias": -1.2027146060961623E-5,
+        "max_absolute": 98.845750423590289
+      },
+      "central150mm": {
+        "pixel_count": 115816,
+        "mae": 0.073728031677070024,
+        "rmse": 1.035211307210635,
+        "bias": -8.2552102722837538E-5,
+        "max_absolute": 98.845750423590289
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 9.30404452444181,
+        "rmse": 16.230504797497517,
+        "bias": 0.83574389862613363,
+        "max_absolute": 92.869667619186657
+      }
+    },
+    "unwindowed_insertion": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 13.481976542105329,
+        "rmse": 21.975677050198868,
+        "bias": -0.99428705969236808,
+        "max_absolute": 317.7830857504523
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 11.577514408575396,
+        "rmse": 15.282988456025132,
+        "bias": -0.14821642013178035,
+        "max_absolute": 86.94192296674737
+      },
+      "central150mm": {
+        "pixel_count": 115816,
+        "mae": 12.901264000715695,
+        "rmse": 17.191517358210643,
+        "bias": 0.032846161953771338,
+        "max_absolute": 86.94192296674737
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 15.98744824668797,
+        "rmse": 20.260078660981772,
+        "bias": 0.15284615343247926,
+        "max_absolute": 58.622809430491543
+      }
+    },
+    "unwindowed_incremental_lesion": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 0.06675496165360395,
+        "rmse": 0.17491136095123927,
+        "bias": -1.9814288334146486E-5,
+        "max_absolute": 15.958583515228383
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 0.056645989734299226,
+        "rmse": 0.16149857873435025,
+        "bias": -4.09421031720399E-5,
+        "max_absolute": 15.958583515228383
+      },
+      "central150mm": {
+        "pixel_count": 115816,
+        "mae": 0.025432220852643534,
+        "rmse": 0.16364586560672573,
+        "bias": -7.5722379292362E-5,
+        "max_absolute": 15.958583515228383
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 1.6653487113192242,
+        "rmse": 2.7261991475058278,
+        "bias": 0.1272893280000735,
+        "max_absolute": 15.958583515228383
+      }
+    },
+    "unwindowed_matched_methods": {
+      "all_pixels": {
+        "pixel_count": 262144,
+        "mae": 7.51478289470563E-12,
+        "rmse": 9.89152058433594E-12,
+        "bias": -2.0143487284408164E-13,
+        "max_absolute": 1.191438059322536E-10
+      },
+      "interior": {
+        "pixel_count": 244596,
+        "mae": 7.5920921361900588E-12,
+        "rmse": 1.0005323268774245E-11,
+        "bias": -2.1118024044747946E-13,
+        "max_absolute": 1.191438059322536E-10
+      },
+      "central150mm": {
+        "pixel_count": 115816,
+        "mae": 8.4787748802015563E-12,
+        "rmse": 1.1348750643942412E-11,
+        "bias": -2.653347290832329E-13,
+        "max_absolute": 1.191438059322536E-10
+      },
+      "lesion": {
+        "pixel_count": 246,
+        "mae": 3.576976113680114E-11,
+        "rmse": 4.3503551335678216E-11,
+        "bias": -7.90077308003556E-12,
+        "max_absolute": 1.0186340659856796E-10
+      }
+    }
+  },
+  "tests": {
+    "projection_coarse_fine_relative_l2": 7.9717426366156893E-7,
+    "projection_fine_quarter_relative_l2": 1.6478877183465374E-7,
+    "padding4_padding6_relative_l2": 1.9049643975531836E-8,
+    "padding2_padding4_relative_l2": 0.00026865526683689006,
+    "reconstruction_coarse_fine": {
+      "pixel_count": 262144,
+      "mae": 0.012441991112744745,
+      "rmse": 0.017899508753182979,
+      "bias": -0.000859117057238129,
+      "max_absolute": 0.15751826358336984
+    },
+    "projection_linearity_relative_l2": 3.8646924321110794E-17,
+    "reconstruction_additivity": {
+      "pixel_count": 262144,
+      "mae": 9.8410389620829265E-12,
+      "rmse": 1.2473775141853854E-11,
+      "bias": 3.3310140072945765E-14,
+      "max_absolute": 7.2306835432328631E-11
+    },
+    "unwindowed_additivity": {
+      "pixel_count": 262144,
+      "mae": 1.1806883730447546E-11,
+      "rmse": 1.4915003841445872E-11,
+      "bias": -2.3204249370687626E-13,
+      "max_absolute": 9.1600060869723166E-11
+    }
+  },
+  "phantom_metrics": {
+    "gaussian_projection_relative_l2": 5.9648989968805666E-8,
+    "gaussian_native": {
+      "pixel_count": 262144,
+      "mae": 2.78059342750188E-7,
+      "rmse": 1.1473188863867151E-6,
+      "bias": 1.809956736631665E-11,
+      "max_absolute": 1.461650914413859E-5
+    },
+    "gaussian_grid": {
+      "pixel_count": 262144,
+      "mae": 2.7805933997352686E-7,
+      "rmse": 1.1473188892086357E-6,
+      "bias": 1.8087442714045339E-11,
+      "max_absolute": 1.4616509131037958E-5
+    },
+    "gaussian_grid_relative_l2": 1.0570452367987997E-5,
+    "disk_native_interior": {
+      "pixel_count": 31040,
+      "mae": 5.2545035062897268E-6,
+      "rmse": 1.6537371721654005E-5,
+      "bias": -1.692024906826979E-6,
+      "max_absolute": 0.00053366116167485877
+    },
+    "disk_grid_interior": {
+      "pixel_count": 31040,
+      "mae": 0.0025881657464862885,
+      "rmse": 0.0045643599163954869,
+      "bias": 2.6428936222419714E-5,
+      "max_absolute": 0.031706393747118256
+    },
+    "disk_grid_all": {
+      "pixel_count": 262144,
+      "mae": 0.0021533377691987485,
+      "rmse": 0.015766147297337961,
+      "bias": 3.0931145022537076E-5,
+      "max_absolute": 0.49965794031731031
+    },
+    "edge_native_10_90_mm": 1.0793085744827948,
+    "edge_grid_10_90_mm": 1.0669474014577958,
+    "square_original": {
+      "pixel_count": 9920,
+      "mae": 0.07474322542942724,
+      "rmse": 0.094937566477234531,
+      "bias": -0.0008057084846719351,
+      "max_absolute": 0.23872066990708163
+    },
+    "square_bounded": {
+      "pixel_count": 9920,
+      "mae": 4.2459539468582774E-15,
+      "rmse": 1.4898663465496211E-14,
+      "bias": -3.0067794132640583E-16,
+      "max_absolute": 5.6843418860808015E-14
+    }
+  }
+}
