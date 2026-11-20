@@ -1,0 +1,83 @@
+{
+  "scope": "Numerical research validation, CPU. No calibrated HU/attenuation or GPU validation.",
+  "source_commit": "ae3c45058667cc343db9736b6c747224133e5770",
+  "inputs_and_implementation": [
+    {
+      "path": "li_fbp/c1_forward_projection_v6_curved_detector.m",
+      "bytes": 2970,
+      "sha256": "84914086c6d5674512aa1156945bf59ca17632bd30fd8f6ea285698ebdc6c25f"
+    },
+    {
+      "path": "li_fbp/c2_fbp_v6_curved_detector.m",
+      "bytes": 4035,
+      "sha256": "325c1cf694447f2d586bbdbdb4016c1c41d79ff03b1cd42c0b9cd65935efa1d8"
+    },
+    {
+      "path": "images/lesion_free_roundtrip_case_b_del_slice071/03_roundtrip_arrays.mat",
+      "bytes": 37230005,
+      "sha256": "f86645b5084656fd33fdfdbdd38b215a025915a2b078457dccb467cbefb65507"
+    },
+    {
+      "path": "images/lesion_insertion_case_b_del_slice071/03_insertion_arrays.mat",
+      "bytes": 51144892,
+      "sha256": "df5017f3e939269820035851016c9efffe96df9865fad3b14a14906bbc907433"
+    },
+    {
+      "path": "lesion_insertion_project/cases without lesion/case b/ABD PEL AX 3 DEL_40cm_512x512x142.raw",
+      "bytes": 74448896,
+      "sha256": "135f1aec17ccc5c762a7e393768683a35f7e81f9e57d0411632a7af21dd513e6"
+    },
+    {
+      "path": "lesion_insertion_project/lesion modesl/case a/S13_I137_DEL_19x18.raw",
+      "bytes": 684,
+      "sha256": "bbe8e1200bde37827d6fcbfff7372fe984914ad2ed20910bcf3f24be5e62bac6"
+    },
+    {
+      "path": "images/direct_reference_case_b_del_slice071/validate_reference_numerics.m",
+      "bytes": 23322,
+      "sha256": "54f1ed2103bba7fb36e3d7a3b535af197515d0b27e441473e6e5445c8d488959"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "images/direct_reference_case_b_del_slice071/01_reconstruction.png",
+      "bytes": 1170940,
+      "sha256": "fce2b9c80eb634a62b7e2a110ccc1dab5d8091161001d23e0e7514d6f7fc6e06"
+    },
+    {
+      "path": "images/direct_reference_case_b_del_slice071/02_lesion_insertion.png",
+      "bytes": 562127,
+      "sha256": "73765376cd0e3bee2c666607ec30d1c4ee42aa339215bc1033bf1169a0f70fe3"
+    },
+    {
+      "path": "images/direct_reference_case_b_del_slice071/03_pixel_differences.png",
+      "bytes": 1659411,
+      "sha256": "c1aae71437e16fb00bfddcd08b7b76224700c0e53479f3b1a8cad9de14945cb0"
+    },
+    {
+      "path": "images/direct_reference_case_b_del_slice071/04_phantom_validation.png",
+      "bytes": 251341,
+      "sha256": "036cb51ae2b97ec8eef0a87c20dc175872750944f708ed943adae36db6362c40"
+    },
+    {
+      "path": "images/direct_reference_case_b_del_slice071/05_bandwidth_comparison.png",
+      "bytes": 662615,
+      "sha256": "df4df23a06bd691e7fa4df58bb73fb365fde825bc5167861db7a141f2b5a9926"
+    },
+    {
+      "path": "images/direct_reference_case_b_del_slice071/06_metrics.json",
+      "bytes": 14910,
+      "sha256": "a144ee8732b2cabaae4796e1bfe8feaab5c718a41d56f66bc104a748f50e8cda"
+    },
+    {
+      "path": "images/direct_reference_case_b_del_slice071/07_arrays.mat",
+      "bytes": 72945283,
+      "sha256": "d52703a9676da99f62f348dee72c0bb21b285db08094736bef178861e47e4867"
+    }
+  ],
+  "preservation_check": {
+    "preexisting_files_checked": 114,
+    "modified_files": []
+  },
+  "notes": "The historical-baseline README is annotated only after this preservation check. Original source, inputs, images, and arrays remain intact."
+}
