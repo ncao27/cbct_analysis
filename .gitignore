@@ -17,3 +17,18 @@
 __pycache__/
 *.py[cod]
 /python_fbp/results/
+
+# Local healthy-patient and segmented-lesion data.
+/lesion_insertion_project/
+
+# Generated figures stay local; reproduction scripts and reports remain trackable.
+# Existing tracked results are unaffected by these rules.
+/images/**/*.png
+/images/**/*.jpg
+/images/**/*.jpeg
+/images/**/*.tif
+/images/**/*.tiff
+/images/**/*.bmp
+/images/**/*.svg
+/images/**/*.pdf
+/images/**/*.fig
