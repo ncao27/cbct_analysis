@@ -18,6 +18,13 @@ These instructions carry forward the owner's playbook at
   and deletions, also verify retained code/data and moved files byte-for-byte.
   If the hardware or inputs prevent a reconstruction run, state the limitation;
   do not claim numerical reconstruction validation from static checks.
+- Keep local healthy-patient/lesion data and new reconstruction figures out of
+  Git. Before generating new figures, ensure their destination paths are covered
+  by `.gitignore`; add rules for any new directory or image format not already
+  covered. Verify coverage with `git check-ignore` and do not force-add ignored
+  outputs. Continue saving and validating figures locally, and commit reproduction
+  code and reports separately. Existing tracked results remain tracked unless
+  the owner requests that they be untracked; ignore rules alone do not untrack them.
 - The research goal is forward projection of healthy and lesion images, followed
   by image-domain or projection-domain lesion insertion. Lesion location is not
   currently the priority. The reference scripts have not yet been integrated
