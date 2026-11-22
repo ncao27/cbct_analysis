@@ -6,7 +6,7 @@
 *.mex*
 !/kernels/prebuilt/windows-x64/*.mexw64
 
-# Generated projection and reconstruction outputs (reference input stays tracked).
+# Generated projection and reconstruction outputs.
 /li_fbp/projections.raw
 /li_fbp/img.raw
 360_projections_original.mat
@@ -32,3 +32,19 @@ __pycache__/
 /images/**/*.svg
 /images/**/*.pdf
 /images/**/*.fig
+
+# Image volumes, projections, and array fixtures stay local, including phantoms.
+# These can contain recoverable patient images even without an image extension.
+*.raw
+*.mat
+*.npy
+*.npz
+*.dcm
+*.nii
+*.nii.gz
+*.nrrd
+*.mha
+*.mhd
+/images/**/*.csv
+/images/**/*.mp4
+/reconstruction videos/
